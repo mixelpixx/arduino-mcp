@@ -1,0 +1,562 @@
+{
+  "arduino": {
+    "about": {
+      "detail": "Verze: {0}\nDatum: {1}[2]\nVerze CLI:  {3}{4} [{5}]\n\n{6}",
+      "label": "O {0}"
+    },
+    "account": {
+      "goToCloudEditor": "Otevřít v cloudovém editoru",
+      "goToIoTCloud": "Jít do IoT cloudu",
+      "goToProfile": "Jdi do profilu",
+      "menuTitle": "Arduino Cloud"
+    },
+    "board": {
+      "board": "Deska {0}",
+      "boardConfigDialogTitle": "Zvolit jinou desku a port",
+      "boardDataReloaded": "Informace o desce znovunačteny",
+      "boardInfo": "Info o desce",
+      "boards": "Desky",
+      "configDialog1": "Pokud chcete nahrát projekt do desky, musíte zvolit jak desku, tak i port.",
+      "configDialog2": "Pokud zvolíte pouze desku, budete schopni projekt kompilovat, ale nebudete jej moci nahrát do desky.",
+      "couldNotFindPreviouslySelected": "Dříve zvolená deska '{0}' v instalované platformě '{1}' nebyla nalezena. Zvolte prosím manuálně desku, kterou chcete použít. Chcete tuto desku zvolit nyní? ",
+      "editBoardsConfig": "Editovat Desku a Port",
+      "getBoardInfo": "Získat info o desce",
+      "inSketchbook": "(v projektech)",
+      "installNow": "Jádro \"{0}{1}\" musí být instalováno pro aktuálně zvolenou \"{2}\" desku. Chcete ho nyní nainstalovat?",
+      "noBoardsFound": "Nenalezeny žádné desky pro \"{0}\"",
+      "noNativeSerialPort": "Fyzický sériový port, nemohu získat informace.",
+      "noPortsDiscovered": "Nenalezeny žádné porty",
+      "nonSerialPort": "Nemohu získat informace, tohle není sériový port.",
+      "openBoardsConfig": "Zvolte jinou desku a port...",
+      "pleasePickBoard": "Vyberte prosím desku která je připojená k zvolenému portu. ",
+      "port": "Port {0}",
+      "ports": "porty",
+      "programmer": "Programátor",
+      "reloadBoardData": "Znovunačíst údaje o desce",
+      "reselectLater": "Zvolit později",
+      "revertBoardsConfig": "Použij '{0}' objeven na '{1}'",
+      "searchBoard": "Vyhledat desku",
+      "selectBoard": "Zvolit desku",
+      "selectBoardToReload": "Nejprve zvolte desku",
+      "selectPortForInfo": "Prosím zvolte port pro získání informací o desce.",
+      "showAllAvailablePorts": "Zobrazit všechny dostupné porty (pokud je zaškrtnuto)",
+      "showAllPorts": "Ukázat všechny porty",
+      "succesfullyInstalledPlatform": "Platforma {0}:{1} byla úspěšně nainstalována.",
+      "succesfullyUninstalledPlatform": "Platforma {0}:{1} byla úspěšně odinstalována.",
+      "typeOfPorts": "{0}porty",
+      "unconfirmedBoard": "Nepotvrzená deska",
+      "unknownBoard": "Neznámá deska"
+    },
+    "boardsManager": "Manažér desek",
+    "boardsType": {
+      "arduinoCertified": "Certifikováno Arduinem"
+    },
+    "bootloader": {
+      "burnBootloader": "Vypálit zavaděč",
+      "burningBootloader": "Vypalování zavaděče...",
+      "doneBurningBootloader": "Nahrání zavaděče bylo dokončeno. "
+    },
+    "burnBootloader": {
+      "error": "Chyba během nahrávání zavaděče: {0}"
+    },
+    "certificate": {
+      "addNew": "Přidat nový",
+      "addURL": "Přidat URL pro získání SSL certifikátu",
+      "boardAtPort": "{0}v{1}",
+      "certificatesUploaded": "Certifikáty nahrány. ",
+      "enterURL": "Vložit URL",
+      "noSupportedBoardConnected": "Není připojena žádná podporovaná deska",
+      "openContext": "Otevřít kontext",
+      "remove": "Odstranit",
+      "selectBoard": "Zvolte desku...",
+      "selectCertificateToUpload": "1. Zvolit certifikát pro nahrání",
+      "selectDestinationBoardToUpload": "2. Zvolit cílovou desku a nahrát certifikát",
+      "upload": "Nahrát",
+      "uploadFailed": "Nahrání se nezdařilo. Prosím zkuste to později. ",
+      "uploadRootCertificates": "Nahrát certifikát SSL",
+      "uploadingCertificates": "Nahrávám certifikát."
+    },
+    "checkForUpdates": {
+      "checkForUpdates": "Kontrola pro aktualizace",
+      "installAll": "Instalovat vše",
+      "noUpdates": "Nejsou k dispozici žádné aktualizace",
+      "promptUpdateBoards": "Pro některé z vašich desek jsou k dispozici aktualizace",
+      "promptUpdateLibraries": "Jsou k dispozici aktualizace pro některé z vašich knihoven",
+      "updatingBoards": "Aktualizuji desky...",
+      "updatingLibraries": "Aktualizuji knihovny..."
+    },
+    "cli-error-parser": {
+      "keyboardError": "‚Keyboard‘ nebylo nalezeno. Nechybí ve vašem projektu řádek ‚#include <Keyboard.h>‘?",
+      "mouseError": "‚Mouse‘ nebylo nalezeno. Nechybí ve vašem projektu řádek ‚#include <Mouse.h>‘?"
+    },
+    "cloud": {
+      "chooseSketchVisibility": "Zvolte viditelnost projektu:",
+      "cloudSketchbook": "Cloudové umístění projektů",
+      "connected": "Připojen",
+      "continue": "Pokračovat",
+      "donePulling": "Dokončeno stahování '{0}'.",
+      "donePushing": "Dokončeno odesílání '{0}'.",
+      "embed": "Vložit: ",
+      "emptySketchbook": "Umístění projektů je prázdné",
+      "goToCloud": "Jít na Cloud",
+      "learnMore": "Zjistit více",
+      "link": "Adresa: ",
+      "notYetPulled": "Nemohu odeslat do cloudu jelikož z něj ještě nebylo staženo.",
+      "offline": "Nepřipojen",
+      "openInCloudEditor": "Otevřít v cloudovém editoru",
+      "options": "Možnosti...",
+      "privateVisibility": "Soukromý projekt. Pouze vy jej můžete vidět.",
+      "profilePicture": "Profilový obrázek",
+      "publicVisibility": "Veřejný projekt. Kdokoliv s tímto odkazem jej může vidět.",
+      "pull": "Stáhnout",
+      "pullFirst": "Nejprve musíte stáhnout z cloudu, aby bylo možno do něj odeslat.",
+      "pullSketch": "Stáhnout projekt",
+      "pullSketchMsg": "Stažení tohoto projektu z cloudu přepíše jeho místní verzi. Jste si jisti, že chcete pokračovat?",
+      "push": "Odeslat",
+      "pushSketch": "Odeslat projekt",
+      "pushSketchMsg": "Toto je veřejný projekt. Před odesláním se prosím ujistěte, že všechny citlivé informace ze souboru arduino_secrets.h jsou smazané. Tento projekt můžete kdykoliv učinit znovu soukromým v panelu sdílení. ",
+      "remote": "Vzdálený",
+      "share": "Sdílet...",
+      "shareSketch": "Sdílet projekt",
+      "showHideSketchbook": "Zobrazit/skrýt cloudové projekty",
+      "signIn": "Přihlásit se",
+      "signInToCloud": "Přihlásit se do Arduino Cloud",
+      "signOut": "Odhlásit se",
+      "sync": "Synchronizovat",
+      "syncEditSketches": "Synchronizujte a upravujte vaše Arduino cloudové projekty",
+      "visitArduinoCloud": "Navštivte Arduino Cloud pro vytvoření cloudového projektu."
+    },
+    "cloudSketch": {
+      "alreadyExists": "Cloudový projekt '{0}' již existuje.",
+      "creating": "Vytváření cloudového projektu '{0}'…",
+      "new": "Nový cloudový projekt",
+      "notFound": "Nepodařilo se odeslat cloudový projekt '{0}'. Neexistuje.",
+      "pulling": "Synchronizace projektů, odesílání '{0}'…",
+      "pushing": "Synchronizace projektů, odesílání '{0}'…",
+      "renaming": "Přejmenovávání cloudového projektu z  '{0}' na '{1}'…",
+      "synchronizingSketchbook": "Synchronizuji projekt..."
+    },
+    "common": {
+      "all": "Vše",
+      "contributed": "Přispěl",
+      "installManually": "Instalovat ručně",
+      "later": "Později",
+      "noBoardSelected": "Nebyla zvolena deska",
+      "noSketchOpened": "Žádný otevřený projekt",
+      "notConnected": "[nepřipojen]",
+      "offlineIndicator": "Nejspíše jste offline. Bez Internetového připojení není Arduino CLI schopno stáhnout potřebné zdroje, a to může způsobit chybu. Prosím připojte se k internetu a restartujte aplikaci.",
+      "oldFormat": "{0}používá stále starý formát `.pde`. Chcete ho převést na soubor s příponou `.ino`?",
+      "partner": "Partner",
+      "processing": "Zpracovávám",
+      "recommended": "Doporučené",
+      "retired": "Zastaralý",
+      "selectManually": "Zvolit ručně",
+      "selectedOn": "zapnuto{0}",
+      "serialMonitor": "Seriový monitor",
+      "type": "typ",
+      "unknown": "Neznámý",
+      "updateable": "Aktualizovatelné",
+      "userAbort": "Přerušení uživatelem"
+    },
+    "compile": {
+      "error": "Chyba kompilace: {0}"
+    },
+    "component": {
+      "boardsIncluded": "Desky obsažené v tomto balíku:",
+      "by": "od",
+      "clickToOpen": "Klikněte pro otevření v prohlížeči: {0}",
+      "filterSearch": "Filtrovat vyhledávání... ",
+      "install": "Instalovat",
+      "installLatest": "Instalovat poslední",
+      "installVersion": "Instalovat {0}",
+      "installed": "{0} nainstalováno",
+      "moreInfo": "Více informací",
+      "otherVersions": "Ostatní verze",
+      "remove": "Odstranit",
+      "title": "{0} podle {1}",
+      "uninstall": "Odinstalovat",
+      "uninstallMsg": "Chcete odinstalovat {0}?",
+      "update": "Aktualizovat"
+    },
+    "configuration": {
+      "cli": {
+        "inaccessibleDirectory": "Nepodařilo se získat přístup k lokaci projektu v '{0}': {1}"
+      }
+    },
+    "connectionStatus": {
+      "connectionLost": "Připojení ztraceno. Cloudové akce a aktualizace nebudou dostupné. "
+    },
+    "contributions": {
+      "addFile": "Přidat soubor",
+      "fileAdded": "Jeden soubor byl přidán do projektu.",
+      "plotter": {
+        "couldNotOpen": "Nepodařilo se otevřít sériový vykreslovač"
+      },
+      "replaceTitle": "Vyměnit"
+    },
+    "core": {
+      "compilerWarnings": {
+        "all": "Vše",
+        "default": "Výchozí",
+        "more": "Více",
+        "none": "Žádný"
+      }
+    },
+    "coreContribution": {
+      "copyError": "Kopírovat chybové hlášky",
+      "noBoardSelected": "Není vybraná žádná deska. Vyberte vaši desku z Nástroje > Deska nabídky."
+    },
+    "createCloudCopy": "Odeslat projekt do cloudu",
+    "daemon": {
+      "restart": "Restartovat Daemon",
+      "start": "Spustit Daemon",
+      "stop": "Zastavit Daemon"
+    },
+    "debug": {
+      "debugWithMessage": "Debug - {0}",
+      "debuggingNotSupported": "Debugging není podporován s  '{0}'",
+      "getDebugInfo": "Získat informace o ladění…",
+      "noPlatformInstalledFor": "Platforma není nainstalována pro '{0}'",
+      "optimizeForDebugging": "optimalizovat pro Debugging",
+      "sketchIsNotCompiled": "Projekt '{0}' musí být ověřený před zahájením relace ladění. Ověřte projekt a zahajte ladění znovu. Přejete si ověřit projekt rovnou?"
+    },
+    "developer": {
+      "clearBoardList": "Vyčistit historii seznamu desek",
+      "clearBoardsConfig": "Vymazat výběr desky a portu",
+      "dumpBoardList": "Vypsat seznam desek"
+    },
+    "dialog": {
+      "dontAskAgain": "Znovu se neptat"
+    },
+    "editor": {
+      "autoFormat": "Automatické formátování",
+      "commentUncomment": "Komentovat/Odkomentovat",
+      "copyForForum": "Kopírovat pro forum (Markdown)",
+      "decreaseFontSize": "Zmenšit velikost písma",
+      "decreaseIndent": "Zmenšit odrážku",
+      "increaseFontSize": "Zvýšit velikost písma",
+      "increaseIndent": "Zvětšit odrážku",
+      "nextError": "Další chyba",
+      "previousError": "Předchozí chyba",
+      "revealError": "Zobrazit Chybu"
+    },
+    "examples": {
+      "builtInExamples": "Vestavěné příklady.",
+      "couldNotInitializeExamples": "Nebylo možné inicializovat vestavěné příklady.",
+      "customLibrary": "Příklady pro vlastní knihovny",
+      "for": "Příklady pro {0}",
+      "forAny": "Příklady pro všechny desky",
+      "menu": "Příklady"
+    },
+    "firmware": {
+      "checkUpdates": "Zkontrolovat aktualizace",
+      "failedInstall": "Instalace se nezdařila. Prosím zkuste to později. ",
+      "install": "Instalovat",
+      "installingFirmware": "Instaluji firmware.",
+      "overwriteSketch": "Instalace přepíše projekt nahraný na desce.",
+      "selectBoard": "Zvolit desku",
+      "selectVersion": "Zvolit verzi firmwaru",
+      "successfullyInstalled": "Firmware byl úspěšně nainstalován. ",
+      "updater": "aktualizační program firmwaru"
+    },
+    "help": {
+      "environment": "Prostředí",
+      "faq": "Často kladené otázky",
+      "findInReference": "Hledat v referencích",
+      "gettingStarted": "Začínáme",
+      "keyword": "Napište klíčové slovo",
+      "privacyPolicy": "Zásady ochrany osobních údajů",
+      "reference": "Reference",
+      "search": "Hledat na Arduino.cc",
+      "troubleshooting": "Řešení problémů",
+      "visit": "Navštívit Arduino.cc"
+    },
+    "ide-updater": {
+      "checkForUpdates": "Zkontrolovat aktualizace",
+      "closeAndInstallButton": "Zavřít a nainstalovat",
+      "closeToInstallNotice": "Vypněte program a nainstalujte update na Váš stroj. ",
+      "donateLinkIconTitle": "otevřít stránku pro darování",
+      "donateLinkText": "darujte, abyste nás podpořili",
+      "donateText": "Open source is láska, {0}",
+      "downloadButton": "Stáhnout",
+      "downloadingNotice": "Stahuji poslední verzi Arduino IDE.",
+      "errorCheckingForUpdates": "Nastala chyba při kontrole aktualizací Arduino IDE{0}",
+      "goToDownloadButton": "přejit do stažených",
+      "goToDownloadPage": "Je dostupná aktualizace pro Arduino IDE, ale nepodařilo se jej stáhnout a nainstalovat automaticky. Prosím navštivte stránku pro stažení a stáhněte prosím jeho poslední verzi ručně. ",
+      "ideUpdaterDialog": "Softwarová aktualizace",
+      "newVersionAvailable": "Je k dispozici nová verze Arduino IDE ({0}).",
+      "noUpdatesAvailable": "Nejsou k dispozici žádné aktualizace pro Arduino ID",
+      "notNowButton": "Nyní ne",
+      "skipVersionButton": "přeskočit verzi",
+      "updateAvailable": "Je dostupná aktualizace",
+      "versionDownloaded": "Arduino IDE {0}bylo staženo."
+    },
+    "installable": {
+      "libraryInstallFailed": "Instalace knihovny '{0}{1}' se nezdařila. ",
+      "platformInstallFailed": "Instalace platformy '{0}{1}' se nezdařila. "
+    },
+    "library": {
+      "addZip": "Přidat .ZIP knihovnu...",
+      "arduinoLibraries": "Arduino knihovny",
+      "contributedLibraries": "Přispěné knihovny",
+      "include": "Zahrnout knihovnu",
+      "installAll": "Instalovat vše",
+      "installLibraryDependencies": "Instalovat závislosti knihovny",
+      "installMissingDependencies": "Chcete nainstalovat všechny chybějící závislosti? ",
+      "installOneMissingDependency": "Chcete nainstalovat chybějící závislost? ",
+      "installWithoutDependencies": "Instalovat bez závislostí",
+      "installedSuccessfully": "Knihovna {0}:{1}byla úspěšně nainstalována",
+      "libraryAlreadyExists": "Knihovna již existuje. Chcete jí přepsat?",
+      "manageLibraries": "Spravovat knihovny...",
+      "namedLibraryAlreadyExists": "Knihovna s názvem {0}již existuje. Chcete jí přepsat? ",
+      "needsMultipleDependencies": "Knihovna <b>{0}:{1}</b>vyžaduje další jinou závislost která není nainstalovaná:",
+      "needsOneDependency": "Knihovna <b>{0}:{1}</b>vyžaduje další závislost která není nainstalovaná:",
+      "overwriteExistingLibrary": "Chcete přepsat existující knihovnu? ",
+      "successfullyInstalledZipLibrary": "Knihovna byla úspěšně nainstalována z archívu {0}",
+      "title": "Manažér knihoven",
+      "uninstalledSuccessfully": "Knihovna {0}:{1}byla úspěšně odinstalována",
+      "zipLibrary": "Knihovna"
+    },
+    "librarySearchProperty": {
+      "topic": "Téma"
+    },
+    "libraryTopic": {
+      "communication": "Komunikace",
+      "dataProcessing": "Zpracovávání dat",
+      "dataStorage": "Ukládání dat",
+      "deviceControl": "Ovládání zařízení",
+      "display": "Displej",
+      "other": "Jiné",
+      "sensors": "Senzory",
+      "signalInputOutput": "Vstup/výstup signálu",
+      "timing": "Časování",
+      "uncategorized": "Nezařazeno"
+    },
+    "libraryType": {
+      "installed": "Nainstalováno"
+    },
+    "menu": {
+      "advanced": "Pokročilé",
+      "sketch": "Projekt",
+      "tools": "Nástroje"
+    },
+    "monitor": {
+      "alreadyConnectedError": "Nepovedlo se připojit k {0} {1} portu. Již připojeno.",
+      "baudRate": "{0} baudů",
+      "connectionFailedError": "Nepovedlo se připojit k {0} {1} portu.",
+      "connectionFailedErrorWithDetails": "{0} Nepovedlo se připojit k {1} {2} portu.",
+      "connectionTimeout": "Vypršel časový limit. IDE neobdrželo od sériového monitoru zprávu o úspěchu po úspěšném připojení",
+      "missingConfigurationError": "Nepovedlo se připojit k {0} {1} portu. Chybí konfigurace sériového monitoru.",
+      "notConnectedError": "Nepřipojeno k {0} {1} portu.",
+      "unableToCloseWebSocket": "Nelze uzavřít websocket",
+      "unableToConnectToWebSocket": "Nelze se připojit k websocketu"
+    },
+    "newCloudSketch": {
+      "newSketchTitle": "Název nového cloudového projektu"
+    },
+    "portProtocol": {
+      "network": "Síť",
+      "serial": "Sériový"
+    },
+    "preferences": {
+      "additionalManagerURLs": "Další URL pro manager desek",
+      "auth.audience": "OAuth2 audience",
+      "auth.clientID": "OAuth2 klient ID",
+      "auth.domain": "Doména OAuth2 ",
+      "auth.registerUri": "URL použita při registraci nového uživatele. ",
+      "automatic": "Automaticky",
+      "board.certificates": "Seznam certifikátů, které mohou být nahrány na desky",
+      "browse": "Procházet",
+      "checkForUpdate": "Dostávejte oznámení o dostupných aktualizacích pro IDE, desky a knihovny. Po změně vyžaduje restart IDE. Ve výchozím nastavení zapnuto.",
+      "choose": "Zvolit",
+      "cli.daemonDebug": "Zapnout ladící logování gRPC volání na Arduino CLI. Pro aplikaci tohoto nastavení je nutný restart IDE. Ve výchozím nastavení vypnuto.",
+      "cloud.enabled": "Zapnuto, pokud jsou zapnuty funkce synchonizace. Ve výchozím nastavení zapnuto.",
+      "cloud.pull.warn": "Zapnout, pokud uživatelé mají být varováni před stahování cloudového projektu. Ve výchozím nastavení zapnuto.",
+      "cloud.push.warn": "Zapnout, pokud uživatelé mají být varováni před odesláním cloudového projektu. Ve výchozím nastavení zapnuto.",
+      "cloud.pushpublic.warn": "Zapnout, pokud uživatelé mají být varováni před odesláním veřejného projektu do cloudu. Ve výchozím nastavení zapnuto. ",
+      "cloud.sharedSpaceId": "ID sdíleného prostoru Arduino Cloud, z nějž se načítají projekty. Pokud je prázdné, je vybrán váš soukromý prostor.",
+      "cloud.sketchSyncEndpoint": "Koncový bod používaný k odesílání a stahování projektů ze vzdáleného úložiště. Ve výchozím nastavení směřuje na API Arduino Cloud.",
+      "compile": "kompilovat",
+      "compile.experimental": "Zapnout, pokud má IDE zpracovávat více chyb kompilátoru. Ve výchozím nastavení vypnuto.",
+      "compile.revealRange": "Upravuje způsob, jakým jsou chyby kompilátoru zobrazeny v editoru po neúspěšném ověření/nahrání. Možné hodnoty: „auto\": Posune zobrazení svisle podle potřeby a zobrazí řádek. „center\": Posune zobrazení svisle podle potřeby a zobrazí řádek ve středu. „top\": Posune zobrazení svisle podle potřeby a zobrazí řádek blízko horní části okna, optimalizováno pro zobrazení definice kódu. „centerIfOutsideViewport\": Posune zobrazení svisle podle potřeby a zobrazí řádek ve středu pouze pokud je mimo aktuální zobrazení. Výchozí hodnota je '{0}'.",
+      "compile.verbose": "Ano pro podrobný výstup při kompilaci. Ne je výchozí hodnota.  ",
+      "compile.warnings": "Řekne gcc který stupeň varování se má použít. \"Žádný\" je výchozí hodnota. ",
+      "compilerWarnings": "Varování kompileru",
+      "editorFontSize": "Editor velikosti fontu",
+      "editorQuickSuggestions": "Rychlá nápověda v editoru",
+      "enterAdditionalURLs": "Vložte další URL, jednu pro každý řádek",
+      "files.inside.sketches": "Zobrazit soubory uvnitř projektů",
+      "ide.updateBaseUrl": "Základní URL, z níž se stahují aktualizace. Ve výchozím nastavení: 'https://downloads.arduino.cc/arduino-ide'.",
+      "ide.updateChannel": "Výběr kanálu pro aktualizace. 'stable' pro stabilní vydání, 'nightly' pro nejnovější vývojové verze.",
+      "interfaceScale": "Velikost rozhraní",
+      "invalid.editorFontSize": "Neplatná velikost editoru písem: Toto číslo musí být kladné.",
+      "invalid.sketchbook.location": "Neplatné umístění projektů:{0}",
+      "invalid.theme": "Neplatné téma.",
+      "language.asyncWorkers": "Počet asynchronních pracovníků – async workers – používaných Arduino Language Serverem (clangd). Indexování na pozadí používá také tento počet pracovníků. Minimální hodnota je 0 a maximální 8. Při hodnotě 0 používá jazykový server všechna dostupná jádra. Výchozí hodnota je 0.",
+      "language.log": "Zapnout, aby Arduino Language Server vytvářel soubory `.log` do složek projektů. Jinak vypnuto. Ve výchozím nastavení vypnuto. ",
+      "language.realTimeDiagnostics": "Pokud je zapnuto, jazykový server poskytuje diagnostiku v reálném čase při psaní v editoru. Ve výchozím nastavení vypnuto.",
+      "manualProxy": "Ruční nastavení proxy",
+      "monitor": {
+        "dockPanel": "Oblast aplikačního prostředí, kde bude umístěn widget _{0}_. Může být buď „bottom\" – dole – nebo „right\" – vpravo. Výchozí hodnota je „{1}\"."
+      },
+      "network": "Síť",
+      "newSketchbookLocation": "Zvolit nové umístění projektů",
+      "noCliConfig": "Nepovedlo se načíst CLI konfiguraci",
+      "noProxy": "Bez proxy",
+      "proxySettings": {
+        "hostname": "Jméno hosta",
+        "password": "Heslo",
+        "port": "Číslo portu",
+        "username": "Uživatelské jméno"
+      },
+      "showVerbose": "Zobrazit podrobný výstup během",
+      "sketch": {
+        "inoBlueprint": "Cesta v souborovém systému k výchozí šabloně souborů `.ino`. Pokud je specifikována, obsah této šablony bude použit pro každý nový projekt vytvořený v IDE. Pokud není specifikována, projekty budou generovány s výchozím Arduino obsahem. Nedostupné šablony jsou ignorovány. Pro aplikaci tohoto nastavení **je potřeba restartovat IDE**."
+      },
+      "sketchbook.location": "Umístění projektu",
+      "sketchbook.showAllFiles": "Zapnout zobrazování všech projektů uvnitř projektu. Ve výchozím nastavení vypnuto.",
+      "unofficialBoardSupport": "Zde klikněte pro seznam adres neoficiálně podporovaných desek",
+      "upload": "nahrát",
+      "upload.autoVerify": "Zapnout, pokud má IDE automaticky ověřit kód před nahráním. Ve výchozím nastavení zapnuto. Pokud je tato hodnota vypnuta, IDE nekompiluje kód znovu před nahráním binárního souboru na desku. Nanejvýš důrazně se doporučuje nastavit tuto hodnotu na vypnuto pouze, pokud jste si naprosto jisti tím, že víte, co děláte.",
+      "upload.verbose": "Ano pro podrobný výstup při nahrávání. Ne je výchozí hodnota.  ",
+      "upload.verify": "Po nahrání ověřte, že obsah paměti na desce odpovídá nahranému binárnímu souboru.",
+      "verifyAfterUpload": "Kontrolovat kód po nahrání",
+      "window.autoScale": "Ano pokud se měřítko uživatelského prostředí automaticky mění s velikostí písma. ",
+      "window.zoomLevel": {
+        "deprecationMessage": "Zastaralé. Použijte místo toho 'window.zoomLevel'."
+      }
+    },
+    "renameCloudSketch": {
+      "renameSketchTitle": "Nový název cloudového projektu"
+    },
+    "replaceMsg": "Vyměnit existující verzi {0}?",
+    "selectZip": "Zvolte ZIP soubor s knihovnou kterou chcete přidat",
+    "serial": {
+      "autoscroll": "Autoscroll",
+      "carriageReturn": "Enter (CR)",
+      "connecting": "Připojování k '{0}' na '{1}'…",
+      "message": "Zpráva (Enter pro odeslání zprávy do '{0}' na '{1}')",
+      "newLine": "Nový řádek (NL)",
+      "newLineCarriageReturn": "Oba NL & CR",
+      "noLineEndings": "Bez konce řádku",
+      "notConnected": "Nepřipojen. Zvolte desku a port pro automatické připojení.",
+      "openSerialPlotter": "Sériový vykreslovač",
+      "timestamp": "Časová značka",
+      "toggleTimestamp": "Přepnout časovou značku"
+    },
+    "sketch": {
+      "archiveSketch": "Archivovat projekt",
+      "cantOpen": "Složka s názvem \"{0}\" již existuje, proto nelze projekt otevřít. ",
+      "compile": "Kompiluji projekt…",
+      "configureAndUpload": "Nastavit a nahrát",
+      "createdArchive": "Vytvořen archív '{0}'.",
+      "doneCompiling": "Ověřování dokončeno.",
+      "doneUploading": "Nahrávání dokončeno. ",
+      "editInvalidSketchFolderLocationQuestion": "Chcete zkusit projekt uložit s jiným umístěním?",
+      "editInvalidSketchFolderQuestion": "Chcete zkusit projekt uložit s jiným názvem?",
+      "exportBinary": "Exportovat kompilované soubory",
+      "invalidCloudSketchName": "Název musí začínat písmenem, číslicí nebo podtržítkem, za nímž následují písmena, číslice, pomlčky, tečky a podtržítka. Maximální délka názvu činí 36 znaků.",
+      "invalidSketchFolderLocationDetails": "Projekt nelze uložit do složky uvnitř sebe sama.",
+      "invalidSketchFolderLocationMessage": "Neplatné umístění složky projektu: '{0}'",
+      "invalidSketchFolderNameMessage": "Neplatný název složky projektu '{0}'",
+      "invalidSketchName": "Název musí začínat písmenem, číslicí nebo podtržítkem, za nímž následují písmena, číslice, pomlčky, tečky a podtržítka. Maximální délka názvu činí 63 znaků.",
+      "moving": "Přesouvám",
+      "movingMsg": "Soubor \"{0}\" musí být uvnitř složky pojmenované \"{1}\".\nVytvořit složku, přesunout do ní soubor a pokračovat?",
+      "new": "Nový projekt",
+      "noTrailingPeriod": "Název souboru nemůže končit tečkou",
+      "openFolder": "Otevřít složku",
+      "openRecent": "Otevřít nedávné",
+      "openSketchInNewWindow": "Otevřít projekt v novém okně",
+      "reservedFilename": "'{0}' je vyhrazený název souboru.",
+      "saveFolderAs": "Uložit projekt jako…",
+      "saveSketch": "Uložte svůj projekt, abyste ho mohli znovu otevřít později.",
+      "saveSketchAs": "Uložit složku projektu jako…",
+      "showFolder": "Zobrazit složku projektu",
+      "sketch": "Projekt",
+      "sketchAlreadyContainsThisFileError": "Projekt již obsahuje soubor pojmenovaný ‚{0}‘",
+      "sketchAlreadyContainsThisFileMessage": "Nepovedlo se uložit projekt „{0}“ jako „{1}“. {2}",
+      "sketchbook": "Projekty",
+      "titleLocalSketchbook": "Složka lokálních projektů",
+      "titleSketchbook": "Projekty",
+      "upload": "Nahrát",
+      "uploadUsingProgrammer": "Nahrát pomocí programátoru",
+      "uploading": "Nahrávám...",
+      "userFieldsNotFoundError": "Nemohu nalézt uživatelská pole pro připojenou desku",
+      "verify": "Ověřit",
+      "verifyOrCompile": "Ověřit/Kompilovat"
+    },
+    "sketchbook": {
+      "newCloudSketch": "Nový cloudový projekt",
+      "newSketch": "Nový projekt"
+    },
+    "theme": {
+      "currentThemeNotFound": "Nelze najít aktuálně vybrané téma: {0}. Arduino IDE vybralo vestavěné téma kompatibilní s chybějícím tématem.",
+      "dark": "Tmavý",
+      "deprecated": "{0} (zastaralé)",
+      "hc": "Tmavý s vysokým kontrastem",
+      "hcLight": "Světlý s vysokým kontrastem",
+      "light": "Světlý",
+      "user": "{0} (uživatel)"
+    },
+    "title": {
+      "cloud": "Cloud"
+    },
+    "updateIndexes": {
+      "updateIndexes": "Aktualizovat indexy",
+      "updateLibraryIndex": "Aktualizovat index knihoven",
+      "updatePackageIndex": "Aktualizovat index balíků"
+    },
+    "upload": {
+      "error": "{0}chyba: {1}"
+    },
+    "userFields": {
+      "cancel": "Zrušit",
+      "enterField": "Enter {0}",
+      "upload": "Nahrát"
+    },
+    "validateSketch": {
+      "abortFixMessage": "Projekt je stále neplatný. Přejete si opravit zbývající problémy? Kliknutím na '{0}' se otevře nový projekt.",
+      "abortFixTitle": "Neplatný projekt",
+      "renameSketchFileMessage": "Projekt '{0}' nelze použít. {1} Přejete si jej teď přejmenovat?",
+      "renameSketchFileTitle": "Neplatný název projektu",
+      "renameSketchFolderMessage": "Projekt '{0}' nelze použít. {1} Chcete-li se této zprávy zbavit, přejmenujte jej. Přejete si projekt teď přejmenovat?",
+      "renameSketchFolderTitle": "Neplatný název projektu"
+    },
+    "versionWelcome": {
+      "cancelButton": "Možná později.",
+      "donateButton": "Darujte teď! 😀",
+      "donateMessage": "Arduino se zavázalo udržovat software zdarma a s otevřeným zdrojovým kódem pro všechny. Váš příspěvek nám pomáhá vyvíjet nové funkce, vylepšovat knihovny a podporovat miliony uživatelů po celém světě.",
+      "donateMessage2": "Zvažte prosím podporu naší práce na bezplatném a open source Arduino IDE.",
+      "title": "Vítejte v nové verzi Arduina IDE!",
+      "titleWithVersion": "Vítejte v novém Arduino IDE  {0}!"
+    },
+    "workspace": {
+      "alreadyExists": "'{0}' již existuje."
+    }
+  },
+  "theia": {
+    "core": {
+      "cannotConnectBackend": "Nebylo možné se připojit k backendu. ",
+      "cannotConnectDaemon": "Nebylo možné se připojit k CLI Daemon.",
+      "couldNotSave": "Nebylo možné projekt uložit. Zkopírujte prosím neuloženou práci do vašeho oblíbeného textového editoru a restartujte IDE. ",
+      "daemonOffline": "CLI Daemon nepřipojen",
+      "offline": "Nepřipojen",
+      "offlineText": "Nepřipojen",
+      "quitTitle": "Jste si jisti že chcete odejít"
+    },
+    "editor": {
+      "unsavedTitle": "Neuloženo – {0}"
+    },
+    "messages": {
+      "collapse": "Složit",
+      "expand": "Rozšířit"
+    },
+    "workspace": {
+      "deleteCloudSketch": "Cloudový projekt  '{0}' bude navždy smazán z Arduino serverů a místní mezipaměti. Tato akce je nevratná. Přejete si pokračovat?",
+      "deleteCurrentSketch": "Projekt '{0}' bude navždy smazán. Tato akce je nevratná. Přejete si pokračovat?",
+      "fileNewName": "Název pro nový soubor",
+      "invalidExtension": ".{0}je neplatná přípona",
+      "newFileName": "Nový název souboru"
+    }
+  }
+}

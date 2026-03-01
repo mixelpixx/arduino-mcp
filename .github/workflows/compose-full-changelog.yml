@@ -1,0 +1,66 @@
+name: Compose full changelog
+
+on:
+  release:
+    types:
+      - edited
+
+env:
+  CHANGELOG_ARTIFACTS: changelog
+  # See: https://github.com/actions/setup-node/#readme
+  NODE_VERSION: '18.17'
+
+jobs:
+  create-changelog:
+    if: github.repository == 'arduino/arduino-ide'
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    environment: production
+      
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install Dependencies (Linux only)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libx11-dev libxkbfile-dev libsecret-1-dev
+
+      - name: Get Tag
+        id: tag_name
+        run: |
+          echo "TAG_NAME=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Create full changelog
+        id: full-changelog
+        run: |
+          yarn add @octokit/rest@19.0.13 --ignore-workspace-root-check
+          mkdir "${{ github.workspace }}/${{ env.CHANGELOG_ARTIFACTS }}"
+
+          # Get the changelog file name to build
+          CHANGELOG_FILE_NAME="${{ steps.tag_name.outputs.TAG_NAME }}-$(date +%s).md"
+
+          # Create manifest file pointing to latest changelog file name
+          echo "$CHANGELOG_FILE_NAME" >> "${{ github.workspace }}/${{ env.CHANGELOG_ARTIFACTS }}/latest.txt"
+
+          # Compose changelog
+          yarn run compose-changelog "${{ github.workspace }}/${{ env.CHANGELOG_ARTIFACTS }}/$CHANGELOG_FILE_NAME"
+
+      - name: Configure AWS Credentials for Changelog [S3]
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }} 
+          aws-region: us-east-1 
+
+      - name: Publish Changelog [S3]
+        run: |
+          aws s3 sync ${{ env.CHANGELOG_ARTIFACTS }} s3://${{ secrets.DOWNLOADS_BUCKET }}/arduino-ide/changelog
