@@ -15,6 +15,7 @@
 
 .p-TabBar-toolbar .item.arduino-tool-item {
     margin-left: 0;
+    transition: transform var(--arduino-transition-fast);
 }
 
 .p-TabBar-toolbar .item.arduino-tool-item .toggle-serial-monitor,
@@ -30,16 +31,21 @@
     align-items: center;
     height: var(--arduino-button-height);
     width: var(--arduino-button-height);
+    transition: all var(--arduino-transition-base);
+    border-radius: var(--arduino-radius-pill);
 }
 
 .p-TabBar-toolbar .item.arduino-tool-item .arduino-upload-sketch--toolbar,
 .p-TabBar-toolbar .item.arduino-tool-item .arduino-verify-sketch--toolbar,
 .p-TabBar-toolbar .item.arduino-tool-item .arduino-start-debug {
     background: var(--theia-arduino-toolbar-button-background);
+    box-shadow: var(--arduino-shadow-sm);
 }
 
 .p-TabBar-toolbar .item.arduino-tool-item.enabled:hover > div {
     background: var(--theia-arduino-toolbar-button-hoverBackground);
+    box-shadow: var(--arduino-shadow-md);
+    transform: scale(1.05);
 }
 
 .p-TabBar-toolbar
@@ -51,7 +57,8 @@
     background-color: var(
         --theia-arduino-toolbar-button-secondary-hoverBackground
     );
-    border-radius: 14px;
+    border-radius: var(--arduino-radius-pill);
+    box-shadow: var(--arduino-shadow-sm);
 }
 
 .arduino-verify-sketch--toolbar,
@@ -74,6 +81,11 @@
 .arduino-tool-icon {
     height: var(--arduino-button-height);
     width: var(--arduino-button-height);
+    transition: transform var(--arduino-transition-fast);
+}
+
+.p-TabBar-toolbar .item.arduino-tool-item.enabled:hover .arduino-tool-icon {
+    transform: scale(1.1);
 }
 
 .arduino-verify-sketch--toolbar-icon {

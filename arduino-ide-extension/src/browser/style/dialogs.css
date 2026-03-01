@@ -1,9 +1,11 @@
 .p-Widget.dialogOverlay .dialogBlock {
-    border-radius: 3px;
-    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.25);
+    border-radius: var(--arduino-radius-lg);
+    box-shadow: var(--arduino-shadow-lg);
     margin: 15px 20px;
+    border: 1px solid rgba(0, 129, 132, 0.1);
+    animation: dialog-enter var(--arduino-transition-base);
 
-    /* 
+    /*
        padding (left + right) = 56px
        margin (left + right) = 40px
        total = padding + margin = 96px
@@ -15,18 +17,38 @@
     padding: 0 var(--arduino-button-height);
 }
 
+@keyframes dialog-enter {
+    from {
+        opacity: 0;
+        transform: scale(0.96) translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
 .p-Widget.dialogOverlay .dialogBlock .dialogTitle {
     padding: 20px 0;
-    font-weight: 500;
+    font-weight: 600;
     background-color: transparent;
-    font-size: var(--theia-ui-font-size2);
+    font-size: 16px;
     color: var(--theia-editorWidget-foreground);
     min-height: 0;
+    border-bottom: 1px solid var(--theia-arduino-toolbar-dropdown-border);
+    padding-bottom: var(--arduino-space-md);
+    margin-bottom: var(--arduino-space-md);
 }
 
 .p-Widget.dialogOverlay .dialogBlock .dialogControl {
     padding: 0 0 36px;
     min-height: 0;
+    border-top: 1px solid var(--theia-arduino-toolbar-dropdown-border);
+    padding-top: var(--arduino-space-lg);
+    margin-top: var(--arduino-space-md);
+    display: flex;
+    gap: var(--arduino-space-sm);
+    justify-content: flex-end;
 }
 
 .p-Widget.dialogOverlay .dialogBlock .dialogContent {

@@ -159,7 +159,7 @@ div#select-board-dialog .selectBoardContainer .list .item.selected i {
 .arduino-boards-toolbar-item-container {
     align-items: center;
     background: var(--theia-arduino-toolbar-dropdown-background);
-    border-radius: 1px;
+    border-radius: var(--arduino-radius-md);
     color: var(--theia-arduino-toolbar-dropdown-label);
     border: 1px solid var(--theia-arduino-toolbar-dropdown-border);
     display: flex;
@@ -169,6 +169,13 @@ div#select-board-dialog .selectBoardContainer .list .item.selected i {
     overflow: hidden;
     padding: 0 10px;
     width: 210px;
+    box-shadow: var(--arduino-shadow-sm);
+    transition: all var(--arduino-transition-base);
+}
+
+.arduino-boards-toolbar-item-container:hover {
+    box-shadow: var(--arduino-shadow-md);
+    border-color: var(--theia-arduino-toolbar-dropdown-borderActive);
 }
 
 .arduino-boards-toolbar-item--protocol,
@@ -213,6 +220,9 @@ div#select-board-dialog .selectBoardContainer .list .item.selected i {
     font-style: normal;
     font-weight: 400;
     font-size: 12px;
+    box-shadow: var(--arduino-shadow-lg);
+    border-radius: var(--arduino-radius-md);
+    overflow: hidden;
 }
 
 .arduino-boards-dropdown-list:focus {
@@ -236,7 +246,8 @@ div#select-board-dialog .selectBoardContainer .list .item.selected i {
     display: flex;
     font-size: var(--theia-ui-font-size1);
     justify-content: space-between;
-    padding: 10px;
+    padding: var(--arduino-space-md);
+    transition: all var(--arduino-transition-fast);
 }
 
 .arduino-boards-dropdown-item--board-header {
@@ -282,13 +293,15 @@ div#select-board-dialog .selectBoardContainer .list .item.selected i {
 
 .arduino-boards-dropdown-item:hover {
     background: var(--theia-arduino-toolbar-dropdown-option-backgroundHover);
+    padding-left: calc(var(--arduino-space-md) + 3px);
+    border-left: 3px solid var(--theia-arduino-branding-primary);
 }
 
 .arduino-boards-dropdown-item--selected,
 .arduino-boards-dropdown-item--selected:hover {
     background: var(--theia-arduino-toolbar-dropdown-option-backgroundSelected);
-    border: 1px solid
-        var(--theia-arduino-toolbar-dropdown-option-backgroundSelected);
+    border-left: 3px solid var(--theia-arduino-branding-primary);
+    font-weight: 600;
 }
 
 .arduino-boards-dropdown-item--selected

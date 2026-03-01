@@ -23,6 +23,8 @@
     padding: 0px 5px 5px 5px;
     height: 27px;
     background-color: var(--theia-activityBar-background);
+    border-bottom: 1px solid var(--theia-arduino-toolbar-dropdown-border);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .serial-monitor .head .send {
@@ -52,6 +54,8 @@
     line-height: var(--theia-content-line-height);
     height: 27px;
     width: 100%;
+    border-radius: var(--arduino-radius-md);
+    transition: all var(--arduino-transition-base);
 }
 
 .serial-monitor .head .send > label > input {
@@ -62,6 +66,7 @@
 .serial-monitor .head .send > input:focus,
 .serial-monitor .head .send > label > input:focus {
     border-color: var(--theia-focusBorder);
+    box-shadow: var(--arduino-shadow-focus);
 }
 
 .serial-monitor .head .config {
@@ -76,6 +81,17 @@
     overflow: auto;
     flex: 1;
     padding: 5px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--theia-arduino-branding-primary) transparent;
+}
+
+.serial-monitor .body::-webkit-scrollbar {
+    width: 8px;
+}
+
+.serial-monitor .body::-webkit-scrollbar-thumb {
+    background: var(--theia-arduino-branding-primary);
+    border-radius: 4px;
 }
 
 .p-TabBar-toolbar .item.arduino-monitor {

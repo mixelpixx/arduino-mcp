@@ -123,20 +123,14 @@ export function createMCPPreferences(
  * Bind MCP preferences to the DI container
  */
 export function bindMCPPreferences(bind: interfaces.Bind): void {
-  bind(MCPPreferenceContribution).toConstantValue({
-    schema: mcpPreferenceSchema,
-  });
-
-  bind(PreferenceContribution).toService(MCPPreferenceContribution);
-
+  // Bind preferences proxy
   bind(MCPPreferences).toDynamicValue((ctx) => {
     const preferences = ctx.container.get<PreferenceService>(PreferenceService);
-    const contribution = ctx.container.get<PreferenceContribution>(
-      MCPPreferenceContribution
-    );
-    return createMCPPreferences(preferences, contribution.schema);
+    return createMCPPreferences(preferences, mcpPreferenceSchema);
   }).inSingletonScope();
-}
 
-export const MCPPreferenceContribution = Symbol('MCPPreferenceContribution');
-export interface MCPPreferenceContribution extends PreferenceContribution {}
+  // Register the preference schema contribution
+  bind(PreferenceContribution).toConstantValue({
+    schema: mcpPreferenceSchema,
+  });
+}

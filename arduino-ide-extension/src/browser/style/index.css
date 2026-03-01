@@ -22,6 +22,42 @@
 
 :root {
     --arduino-button-height: 28px;
+
+    /* Spacing System */
+    --arduino-space-xs: 4px;
+    --arduino-space-sm: 8px;
+    --arduino-space-md: 12px;
+    --arduino-space-lg: 16px;
+    --arduino-space-xl: 24px;
+
+    /* Border Radius System */
+    --arduino-radius-sm: 4px;
+    --arduino-radius-md: 6px;
+    --arduino-radius-lg: 8px;
+    --arduino-radius-pill: 14px;
+
+    /* Shadow System */
+    --arduino-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --arduino-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.1);
+    --arduino-shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.15);
+    --arduino-shadow-focus: 0 0 0 3px rgba(0, 129, 132, 0.25);
+
+    /* Transition System */
+    --arduino-transition-fast: 150ms ease;
+    --arduino-transition-base: 200ms ease;
+
+    /* Typography */
+    --arduino-font-size-xs: 11px;
+    --arduino-font-size-sm: 12px;
+    --arduino-font-size-base: 13px;
+}
+
+/* Dark theme shadow adjustments */
+body.theia-dark {
+    --arduino-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
+    --arduino-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --arduino-shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.4);
+    --arduino-shadow-focus: 0 0 0 3px rgba(12, 161, 166, 0.3);
 }
 
 /* Revive of the `--theia-icon-loading`. The variable has been removed from Theia while IDE2 still uses is. */
@@ -72,6 +108,23 @@ body.theia-dark {
     background-color: var(--theia-errorBackground);
 }
 
+/* Enhanced input styling */
+.theia-input,
+input[type="text"],
+input[type="number"] {
+    border-radius: var(--arduino-radius-md);
+    transition: all var(--arduino-transition-base);
+    padding: var(--arduino-space-sm) var(--arduino-space-md);
+}
+
+.theia-input:focus,
+input[type="text"]:focus,
+input[type="number"]:focus {
+    border-color: var(--theia-focusBorder);
+    box-shadow: var(--arduino-shadow-focus);
+    outline: none;
+}
+
 /* Makes the sidepanel a bit wider when opening the widget */
 .p-DockPanel-widget {
     min-width: 220px;
@@ -85,23 +138,24 @@ button.theia-button,
     align-items: center;
     display: flex;
     font-family: "Open Sans Bold", sans-serif;
-    font-style: normal;
     font-weight: 700;
-    font-size: 14px;
+    font-size: var(--arduino-font-size-base);
     justify-content: center;
     cursor: pointer;
     letter-spacing: 0.01em;
     line-height: 24px;
     outline: none;
-    padding: 0 16px;
-    position: relative;
+    padding: 0 var(--arduino-space-lg);
     text-align: center;
     text-decoration: none;
     border-width: 2px;
-    border-radius: 32px;
+    border-style: solid;
     text-transform: uppercase;
-    transition: none;
-    box-shadow: none;
+
+    /* Modern updates */
+    border-radius: var(--arduino-radius-md);
+    transition: all var(--arduino-transition-base);
+    box-shadow: var(--arduino-shadow-sm);
 }
 
 button.theia-button {
@@ -109,18 +163,38 @@ button.theia-button {
     max-width: none;
 }
 
-.theia-button:active,
+button.theia-button:hover:not([disabled]) {
+    box-shadow: var(--arduino-shadow-md);
+    transform: translateY(-1px);
+}
+
+button.theia-button:active:not([disabled]) {
+    transform: translateY(0);
+    box-shadow: var(--arduino-shadow-sm);
+}
+
 .theia-button:focus {
-    box-shadow: 0 0 0 2px var(--theia-focusBorder);
+    box-shadow: var(--arduino-shadow-focus);
+    outline: none;
 }
 
 button.theia-button.secondary {
     border: 2px solid var(--theia-secondaryButton-foreground);
+    background: transparent;
+    box-shadow: none;
+}
+
+button.theia-button.secondary:hover:not([disabled]) {
+    background: var(--theia-secondaryButton-hoverBackground);
+    box-shadow: var(--arduino-shadow-sm);
 }
 
 button.theia-button[disabled],
 .theia-button[disabled] {
-    opacity: 0.5;
+    opacity: 0.4;
+    cursor: not-allowed;
+    box-shadow: none;
+    transform: none;
     color: var(--theia-button-foreground);
     background-color: var(--theia-button-background);
 }

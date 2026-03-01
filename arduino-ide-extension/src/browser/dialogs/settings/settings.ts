@@ -47,6 +47,14 @@ export const UPLOAD_VERBOSE_SETTING = `${UPLOAD_SETTING}.verbose`;
 export const UPLOAD_VERIFY_SETTING = `${UPLOAD_SETTING}.verify`;
 export const SHOW_ALL_FILES_SETTING = `${SKETCHBOOK_SETTING}.showAllFiles`;
 
+// MCP Settings
+export const MCP_SETTING = `${ARDUINO_SETTING}.mcp`;
+export const MCP_ENABLED_SETTING = `${MCP_SETTING}.enabled`;
+export const MCP_AUTO_CONNECT_SETTING = `${MCP_SETTING}.autoConnect`;
+export const MCP_PORT_SETTING = `${MCP_SETTING}.port`;
+export const MCP_LOG_LEVEL_SETTING = `${MCP_SETTING}.logLevel`;
+export const MCP_TOOL_MODE_SETTING = `${MCP_SETTING}.toolMode`;
+
 export interface Settings {
   editorFontSize: number; // `editor.fontSize`
   themeId: string; // `workbench.colorTheme`
@@ -67,6 +75,13 @@ export interface Settings {
   sketchbookPath: string; // CLI
   additionalUrls: AdditionalUrls; // CLI
   network: Network; // CLI
+
+  // MCP (Model Context Protocol) settings
+  mcpEnabled: boolean; // `arduino.mcp.enabled`
+  mcpAutoConnect: boolean; // `arduino.mcp.autoConnect`
+  mcpPort: number; // `arduino.mcp.port`
+  mcpLogLevel: 'none' | 'error' | 'info' | 'debug'; // `arduino.mcp.logLevel`
+  mcpToolMode: 'router' | 'direct'; // `arduino.mcp.toolMode`
 }
 export namespace Settings {
   export function belongsToCli<K extends keyof Settings>(key: K): boolean {
@@ -153,6 +168,11 @@ export class SettingsService {
       verifyAfterUpload,
       sketchbookShowAllFiles,
       cliConfig,
+      mcpEnabled,
+      mcpAutoConnect,
+      mcpPort,
+      mcpLogLevel,
+      mcpToolMode,
     ] = await Promise.all([
       ['en', ...(await this.localizationProvider.getAvailableLanguages())],
       this.localizationProvider.getCurrentLanguage(),
@@ -182,6 +202,11 @@ export class SettingsService {
       this.preferenceService.get<boolean>(UPLOAD_VERIFY_SETTING, true),
       this.preferenceService.get<boolean>(SHOW_ALL_FILES_SETTING, false),
       this.configService.getConfiguration(),
+      this.preferenceService.get<boolean>(MCP_ENABLED_SETTING, true),
+      this.preferenceService.get<boolean>(MCP_AUTO_CONNECT_SETTING, true),
+      this.preferenceService.get<number>(MCP_PORT_SETTING, 3847),
+      this.preferenceService.get<'none' | 'error' | 'info' | 'debug'>(MCP_LOG_LEVEL_SETTING, 'info'),
+      this.preferenceService.get<'router' | 'direct'>(MCP_TOOL_MODE_SETTING, 'router'),
     ]);
     const {
       config = {
@@ -210,6 +235,11 @@ export class SettingsService {
       additionalUrls,
       sketchbookPath,
       network,
+      mcpEnabled,
+      mcpAutoConnect,
+      mcpPort,
+      mcpLogLevel,
+      mcpToolMode,
     };
   }
 
@@ -297,6 +327,11 @@ export class SettingsService {
       additionalUrls,
       network,
       sketchbookShowAllFiles,
+      mcpEnabled,
+      mcpAutoConnect,
+      mcpPort,
+      mcpLogLevel,
+      mcpToolMode,
     } = this._settings;
     const [cliConfig, sketchDirUri] = await Promise.all([
       this.configService.getConfiguration(),
@@ -328,6 +363,11 @@ export class SettingsService {
       this.savePreference(UPLOAD_VERBOSE_SETTING, verboseOnUpload),
       this.savePreference(UPLOAD_VERIFY_SETTING, verifyAfterUpload),
       this.savePreference(SHOW_ALL_FILES_SETTING, sketchbookShowAllFiles),
+      this.savePreference(MCP_ENABLED_SETTING, mcpEnabled),
+      this.savePreference(MCP_AUTO_CONNECT_SETTING, mcpAutoConnect),
+      this.savePreference(MCP_PORT_SETTING, mcpPort),
+      this.savePreference(MCP_LOG_LEVEL_SETTING, mcpLogLevel),
+      this.savePreference(MCP_TOOL_MODE_SETTING, mcpToolMode),
       this.configService.setConfiguration(config),
     ]);
     this.onDidChangeEmitter.fire(this._settings);

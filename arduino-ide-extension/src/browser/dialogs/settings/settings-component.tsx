@@ -103,9 +103,11 @@ export class SettingsComponent extends React.Component<
         <TabList>
           <Tab>{nls.localize('vscode/settingsTree/settings', 'Settings')}</Tab>
           <Tab>{nls.localize('arduino/preferences/network', 'Network')}</Tab>
+          <Tab>{nls.localize('arduino/preferences/mcp', 'MCP')}</Tab>
         </TabList>
         <TabPanel>{this.renderSettings()}</TabPanel>
         <TabPanel>{this.renderNetwork()}</TabPanel>
+        <TabPanel>{this.renderMCP()}</TabPanel>
       </Tabs>
     );
   }
@@ -526,6 +528,107 @@ export class SettingsComponent extends React.Component<
     );
   }
 
+  protected renderMCP(): React.ReactNode {
+    return (
+      <div className="content noselect">
+        <div className="mcp-header">
+          <h3 style={{ marginTop: 0, marginBottom: '8px' }}>
+            {nls.localize('arduino/preferences/mcp.title', 'Model Context Protocol (MCP)')}
+          </h3>
+          <p style={{ marginTop: 0, marginBottom: '16px', opacity: 0.8, fontSize: '12px' }}>
+            {nls.localize(
+              'arduino/preferences/mcp.description',
+              'MCP enables AI assistants like Claude Code to interact with the Arduino IDE - compiling sketches, uploading code, managing libraries, and more.'
+            )}
+          </p>
+        </div>
+
+        <label className="flex-line">
+          <input
+            type="checkbox"
+            checked={this.state.mcpEnabled}
+            onChange={this.mcpEnabledDidChange}
+          />
+          {nls.localize('arduino/preferences/mcp.enabled', 'Enable MCP server')}
+        </label>
+
+        <label className="flex-line">
+          <input
+            type="checkbox"
+            checked={this.state.mcpAutoConnect}
+            onChange={this.mcpAutoConnectDidChange}
+            disabled={!this.state.mcpEnabled}
+          />
+          {nls.localize('arduino/preferences/mcp.autoConnect', 'Start MCP server automatically on launch')}
+        </label>
+
+        <div className="column-container" style={{ marginTop: '12px' }}>
+          <div className="column">
+            <div className="flex-line">
+              {nls.localize('arduino/preferences/mcp.port', 'Server port') + ':'}
+            </div>
+            <div className="flex-line">
+              {nls.localize('arduino/preferences/mcp.logLevel', 'Log level') + ':'}
+            </div>
+            <div className="flex-line">
+              {nls.localize('arduino/preferences/mcp.toolMode', 'Tool mode') + ':'}
+            </div>
+          </div>
+          <div className="column">
+            <div className="flex-line">
+              <input
+                className="theia-input small"
+                type="number"
+                min={1024}
+                max={65535}
+                value={this.state.mcpPort}
+                onChange={this.mcpPortDidChange}
+                disabled={!this.state.mcpEnabled}
+              />
+            </div>
+            <div className="flex-line">
+              <select
+                className="theia-select"
+                value={this.state.mcpLogLevel}
+                onChange={this.mcpLogLevelDidChange}
+                disabled={!this.state.mcpEnabled}
+              >
+                <option value="none">{nls.localize('arduino/preferences/mcp.logLevel.none', 'None')}</option>
+                <option value="error">{nls.localize('arduino/preferences/mcp.logLevel.error', 'Errors only')}</option>
+                <option value="info">{nls.localize('arduino/preferences/mcp.logLevel.info', 'Info')}</option>
+                <option value="debug">{nls.localize('arduino/preferences/mcp.logLevel.debug', 'Debug')}</option>
+              </select>
+            </div>
+            <div className="flex-line">
+              <select
+                className="theia-select"
+                value={this.state.mcpToolMode}
+                onChange={this.mcpToolModeDidChange}
+                disabled={!this.state.mcpEnabled}
+              >
+                <option value="router">
+                  {nls.localize('arduino/preferences/mcp.toolMode.router', 'Router (4 meta-tools, recommended)')}
+                </option>
+                <option value="direct">
+                  {nls.localize('arduino/preferences/mcp.toolMode.direct', 'Direct (all tools exposed)')}
+                </option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div style={{ marginTop: '16px', padding: '12px', background: 'var(--theia-editor-background)', borderRadius: '4px' }}>
+          <div style={{ fontSize: '12px', opacity: 0.8 }}>
+            {nls.localize('arduino/preferences/mcp.connectionInfo', 'To connect Claude Code, add to your MCP configuration:')}
+          </div>
+          <code style={{ display: 'block', marginTop: '8px', fontSize: '11px', wordBreak: 'break-all' }}>
+            http://127.0.0.1:{this.state.mcpPort}/sse
+          </code>
+        </div>
+      </div>
+    );
+  }
+
   private isControlKey(event: React.KeyboardEvent<HTMLInputElement>): boolean {
     return (
       !!event.key &&
@@ -787,6 +890,42 @@ export class SettingsComponent extends React.Component<
     const copyNetwork = deepClone(network);
     return copyNetwork;
   }
+
+  // MCP Settings handlers
+  protected mcpEnabledDidChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ): void => {
+    this.setState({ mcpEnabled: event.target.checked });
+  };
+
+  protected mcpAutoConnectDidChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ): void => {
+    this.setState({ mcpAutoConnect: event.target.checked });
+  };
+
+  protected mcpPortDidChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ): void => {
+    const port = parseInt(event.target.value, 10);
+    if (!isNaN(port) && port >= 1024 && port <= 65535) {
+      this.setState({ mcpPort: port });
+    }
+  };
+
+  protected mcpLogLevelDidChange = (
+    event: React.ChangeEvent<HTMLSelectElement>
+  ): void => {
+    const logLevel = event.target.value as 'none' | 'error' | 'info' | 'debug';
+    this.setState({ mcpLogLevel: logLevel });
+  };
+
+  protected mcpToolModeDidChange = (
+    event: React.ChangeEvent<HTMLSelectElement>
+  ): void => {
+    const toolMode = event.target.value as 'router' | 'direct';
+    this.setState({ mcpToolMode: toolMode });
+  };
 }
 export namespace SettingsComponent {
   export interface Props {

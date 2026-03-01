@@ -4,17 +4,38 @@
 
 .progress-bar--outer {
     background: var(--theia-editorWidget-background);
-    border-radius: 11px;
+    border-radius: var(--arduino-radius-pill);
     height: 6px;
     position: relative;
     overflow: hidden;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .progress-bar--inner {
-    transition: width 1s;
     height: 100%;
-    background: var(--theia-progressBar-background);
-    border-radius: 11px;
+    border-radius: var(--arduino-radius-pill);
+    background: linear-gradient(90deg,
+        var(--theia-progressBar-background),
+        var(--theia-arduino-branding-primary)
+    );
+    transition: width var(--arduino-transition-base);
+    position: relative;
+}
+
+/* Shimmer effect */
+.progress-bar--inner::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+    100% { left: 100%; }
 }
 
 .progress-bar--percentage {

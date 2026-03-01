@@ -9,10 +9,13 @@
 
 .arduino-list-widget .search-bar {
     margin: 0px 10px 5px 15px;
+    border-radius: var(--arduino-radius-md);
+    transition: all var(--arduino-transition-base);
 }
 
 .arduino-list-widget .search-bar:focus {
     border-color: var(--theia-focusBorder);
+    box-shadow: var(--arduino-shadow-focus);
 }
 
 .arduino-list-widget .filter-bar {
@@ -46,6 +49,12 @@
 
 .component-list-item {
     padding: 20px 15px 25px;
+    transition: all var(--arduino-transition-base);
+    border-bottom: 1px solid rgba(0, 129, 132, 0.08);
+}
+
+.component-list-item:hover {
+    background: var(--theia-list-hoverBackground);
 }
 
 .component-list-item .header {
@@ -86,6 +95,11 @@
     font-style: normal;
     font-weight: 700;
     font-size: 14px;
+    transition: color var(--arduino-transition-fast);
+}
+
+.component-list-item:hover .header .title .name {
+    color: var(--theia-arduino-branding-primary);
 }
 
 .component-list-item .header .version {

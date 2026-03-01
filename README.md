@@ -81,15 +81,17 @@ This allows the AI to discover and use tools on-demand without loading all defin
 
 ### IDE Settings
 
-Access via **File > Preferences > Settings**, search for "MCP":
+Access via **File > Preferences** and click the **MCP** tab:
 
 | Setting | Description | Default |
 |---------|-------------|---------|
-| `arduino.mcp.enabled` | Enable/disable MCP server | `true` |
-| `arduino.mcp.autoConnect` | Auto-start on IDE launch | `true` |
-| `arduino.mcp.port` | HTTP port for MCP server | `3847` |
-| `arduino.mcp.logLevel` | Logging verbosity | `info` |
-| `arduino.mcp.toolMode` | Tool exposure mode (router/direct) | `router` |
+| Enable MCP server | Enable/disable MCP server integration | `true` |
+| Start automatically | Auto-start MCP server on IDE launch | `true` |
+| Server port | HTTP port for MCP server (1024-65535) | `3847` |
+| Log level | Logging verbosity (none/error/info/debug) | `info` |
+| Tool mode | Router (4 meta-tools) or Direct (all tools) | `router` |
+
+The MCP tab also displays the connection URL for easy copy/paste into Claude Code.
 
 ### Verify Connection
 
@@ -114,6 +116,37 @@ See [arduino-mcp-extension/README.md](arduino-mcp-extension/README.md) for compl
 - Example interactions and use cases
 - Tool safety annotations
 - Troubleshooting guide
+
+---
+
+## UI/UX Modernization
+
+This fork includes visual enhancements that give the IDE a more polished, professional appearance while maintaining full compatibility with the Arduino brand identity.
+
+### Design System
+
+A comprehensive CSS variable system provides consistent styling:
+
+- **Spacing**: Standardized spacing scale (4px, 8px, 12px, 16px, 24px)
+- **Border Radius**: Consistent rounding (4px, 6px, 8px, 14px pill)
+- **Shadows**: Subtle depth with light/dark theme variants
+- **Transitions**: Smooth 150-200ms animations
+
+### Visual Improvements
+
+| Component | Enhancements |
+|-----------|--------------|
+| **Buttons** | Subtle shadows, hover lift effect, modern 6px radius |
+| **Toolbar** | Scale animations on hover, polished button states |
+| **Dialogs** | Entry animation (fade + scale), visual separators |
+| **Board Selector** | Rounded dropdown, accent border on hover/selection |
+| **Progress Bars** | Gradient fill with shimmer animation |
+| **Input Fields** | Focus ring with teal brand glow |
+| **List Items** | Hover backgrounds, title accent on hover |
+| **Serial Monitor** | Styled scrollbar, input focus states |
+| **Status Bar** | Board/port badges with teal background |
+
+All styling respects both light and dark themes automatically.
 
 ---
 

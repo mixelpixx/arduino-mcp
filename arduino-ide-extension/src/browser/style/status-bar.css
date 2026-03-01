@@ -5,3 +5,16 @@
 #theia-statusBar .area .element.arduino-selected-board > *:last-child {
     margin-right: 0px;
 }
+
+#theia-statusBar .area .element.arduino-selected-port,
+#theia-statusBar .area .element.arduino-selected-board {
+    padding: 2px var(--arduino-space-sm);
+    border-radius: var(--arduino-radius-sm);
+    background: rgba(0, 129, 132, 0.1);
+    transition: all var(--arduino-transition-base);
+}
+
+#theia-statusBar .area .element.arduino-selected-port:hover,
+#theia-statusBar .area .element.arduino-selected-board:hover {
+    background: rgba(0, 129, 132, 0.2);
+}
