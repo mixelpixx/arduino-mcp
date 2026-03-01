@@ -1,0 +1,890 @@
+From aa941534050b5869a09f186e1f32e9d76deec858 Mon Sep 17 00:00:00 2001
+From: mixelpixx <chris_stockslager@comcast.net>
+Date: Sat, 28 Feb 2026 22:30:17 -0500
+Subject: [PATCH 3/3] Add MCP settings tab and modernize UI/UX
+
+MCP Settings Integration:
+- Add dedicated MCP tab to File > Preferences dialog
+- Enable/disable MCP server, auto-connect, port, log level, tool mode
+- Display connection URL for easy Claude Code configuration
+- Settings persist via Theia preference system
+
+UI/UX Modernization:
+- Add CSS design system with spacing, radius, shadow, transition tokens
+- Buttons: subtle shadows, hover lift effect, modern border radius
+- Toolbar: scale animations on hover, polished button states
+- Dialogs: entry animation (fade + scale), visual separators
+- Board selector: rounded dropdown, accent border on hover/selection
+- Progress bars: gradient fill with shimmer animation
+- Input fields: focus ring with teal brand glow
+- List items: hover backgrounds, title accent color
+- Serial monitor: styled scrollbar, input focus states
+- Status bar: board/port badges with teal background
+- All styling respects light and dark themes
+
+Documentation:
+- Update README with MCP settings tab instructions
+- Document UI/UX modernization features
+
+Co-Authored-By: Claude Opus 4.6 <noreply@anthropic.com>
+---
+ README.md                                     |  45 +++++-
+ .../dialogs/settings/settings-component.tsx   | 139 ++++++++++++++++++
+ .../src/browser/dialogs/settings/settings.ts  |  40 +++++
+ .../browser/style/boards-config-dialog.css    |  21 ++-
+ .../src/browser/style/dialogs.css             |  32 +++-
+ .../src/browser/style/index.css               |  94 ++++++++++--
+ .../src/browser/style/list-widget.css         |  14 ++
+ .../src/browser/style/main.css                |  14 +-
+ .../src/browser/style/monitor.css             |  16 ++
+ .../src/browser/style/progress-bar.css        |  29 +++-
+ .../src/browser/style/status-bar.css          |  13 ++
+ .../src/browser/mcp-preferences.ts            |  20 +--
+ 12 files changed, 434 insertions(+), 43 deletions(-)
+
+diff --git a/README.md b/README.md
+index ec174f1..2f6d8cf 100644
+--- a/README.md
++++ b/README.md
+@@ -81,15 +81,17 @@ This allows the AI to discover and use tools on-demand without loading all defin
+ 
+ ### IDE Settings
+ 
+-Access via **File > Preferences > Settings**, search for "MCP":
++Access via **File > Preferences** and click the **MCP** tab:
+ 
+ | Setting | Description | Default |
+ |---------|-------------|---------|
+-| `arduino.mcp.enabled` | Enable/disable MCP server | `true` |
+-| `arduino.mcp.autoConnect` | Auto-start on IDE launch | `true` |
+-| `arduino.mcp.port` | HTTP port for MCP server | `3847` |
+-| `arduino.mcp.logLevel` | Logging verbosity | `info` |
+-| `arduino.mcp.toolMode` | Tool exposure mode (router/direct) | `router` |
++| Enable MCP server | Enable/disable MCP server integration | `true` |
++| Start automatically | Auto-start MCP server on IDE launch | `true` |
++| Server port | HTTP port for MCP server (1024-65535) | `3847` |
++| Log level | Logging verbosity (none/error/info/debug) | `info` |
++| Tool mode | Router (4 meta-tools) or Direct (all tools) | `router` |
++
++The MCP tab also displays the connection URL for easy copy/paste into Claude Code.
+ 
+ ### Verify Connection
+ 
+@@ -117,6 +119,37 @@ See [arduino-mcp-extension/README.md](arduino-mcp-extension/README.md) for compl
+ 
+ ---
+ 
++## UI/UX Modernization
++
++This fork includes visual enhancements that give the IDE a more polished, professional appearance while maintaining full compatibility with the Arduino brand identity.
++
++### Design System
++
++A comprehensive CSS variable system provides consistent styling:
++
++- **Spacing**: Standardized spacing scale (4px, 8px, 12px, 16px, 24px)
++- **Border Radius**: Consistent rounding (4px, 6px, 8px, 14px pill)
++- **Shadows**: Subtle depth with light/dark theme variants
++- **Transitions**: Smooth 150-200ms animations
++
++### Visual Improvements
++
++| Component | Enhancements |
++|-----------|--------------|
++| **Buttons** | Subtle shadows, hover lift effect, modern 6px radius |
++| **Toolbar** | Scale animations on hover, polished button states |
++| **Dialogs** | Entry animation (fade + scale), visual separators |
++| **Board Selector** | Rounded dropdown, accent border on hover/selection |
++| **Progress Bars** | Gradient fill with shimmer animation |
++| **Input Fields** | Focus ring with teal brand glow |
++| **List Items** | Hover backgrounds, title accent on hover |
++| **Serial Monitor** | Styled scrollbar, input focus states |
++| **Status Bar** | Board/port badges with teal background |
++
++All styling respects both light and dark themes automatically.
++
++---
++
+ ## Arduino IDE 2.x
+ 
+ This repository contains the source code of the Arduino IDE 2.x. If you're looking for the old IDE, go to the [repository of the 1.x version](https://github.com/arduino/Arduino).
+diff --git a/arduino-ide-extension/src/browser/dialogs/settings/settings-component.tsx b/arduino-ide-extension/src/browser/dialogs/settings/settings-component.tsx
+index 347c712..2724f45 100644
+--- a/arduino-ide-extension/src/browser/dialogs/settings/settings-component.tsx
++++ b/arduino-ide-extension/src/browser/dialogs/settings/settings-component.tsx
+@@ -103,9 +103,11 @@ export class SettingsComponent extends React.Component<
+         <TabList>
+           <Tab>{nls.localize('vscode/settingsTree/settings', 'Settings')}</Tab>
+           <Tab>{nls.localize('arduino/preferences/network', 'Network')}</Tab>
++          <Tab>{nls.localize('arduino/preferences/mcp', 'MCP')}</Tab>
+         </TabList>
+         <TabPanel>{this.renderSettings()}</TabPanel>
+         <TabPanel>{this.renderNetwork()}</TabPanel>
++        <TabPanel>{this.renderMCP()}</TabPanel>
+       </Tabs>
+     );
+   }
+@@ -526,6 +528,107 @@ export class SettingsComponent extends React.Component<
+     );
+   }
+ 
++  protected renderMCP(): React.ReactNode {
++    return (
++      <div className="content noselect">
++        <div className="mcp-header">
++          <h3 style={{ marginTop: 0, marginBottom: '8px' }}>
++            {nls.localize('arduino/preferences/mcp.title', 'Model Context Protocol (MCP)')}
++          </h3>
++          <p style={{ marginTop: 0, marginBottom: '16px', opacity: 0.8, fontSize: '12px' }}>
++            {nls.localize(
++              'arduino/preferences/mcp.description',
++              'MCP enables AI assistants like Claude Code to interact with the Arduino IDE - compiling sketches, uploading code, managing libraries, and more.'
++            )}
++          </p>
++        </div>
++
++        <label className="flex-line">
++          <input
++            type="checkbox"
++            checked={this.state.mcpEnabled}
++            onChange={this.mcpEnabledDidChange}
++          />
++          {nls.localize('arduino/preferences/mcp.enabled', 'Enable MCP server')}
++        </label>
++
++        <label className="flex-line">
++          <input
++            type="checkbox"
++            checked={this.state.mcpAutoConnect}
++            onChange={this.mcpAutoConnectDidChange}
++            disabled={!this.state.mcpEnabled}
++          />
++          {nls.localize('arduino/preferences/mcp.autoConnect', 'Start MCP server automatically on launch')}
++        </label>
++
++        <div className="column-container" style={{ marginTop: '12px' }}>
++          <div className="column">
++            <div className="flex-line">
++              {nls.localize('arduino/preferences/mcp.port', 'Server port') + ':'}
++            </div>
++            <div className="flex-line">
++              {nls.localize('arduino/preferences/mcp.logLevel', 'Log level') + ':'}
++            </div>
++            <div className="flex-line">
++              {nls.localize('arduino/preferences/mcp.toolMode', 'Tool mode') + ':'}
++            </div>
++          </div>
++          <div className="column">
++            <div className="flex-line">
++              <input
++                className="theia-input small"
++                type="number"
++                min={1024}
++                max={65535}
++                value={this.state.mcpPort}
++                onChange={this.mcpPortDidChange}
++                disabled={!this.state.mcpEnabled}
++              />
++            </div>
++            <div className="flex-line">
++              <select
++                className="theia-select"
++                value={this.state.mcpLogLevel}
++                onChange={this.mcpLogLevelDidChange}
++                disabled={!this.state.mcpEnabled}
++              >
++                <option value="none">{nls.localize('arduino/preferences/mcp.logLevel.none', 'None')}</option>
++                <option value="error">{nls.localize('arduino/preferences/mcp.logLevel.error', 'Errors only')}</option>
++                <option value="info">{nls.localize('arduino/preferences/mcp.logLevel.info', 'Info')}</option>
++                <option value="debug">{nls.localize('arduino/preferences/mcp.logLevel.debug', 'Debug')}</option>
++              </select>
++            </div>
++            <div className="flex-line">
++              <select
++                className="theia-select"
++                value={this.state.mcpToolMode}
++                onChange={this.mcpToolModeDidChange}
++                disabled={!this.state.mcpEnabled}
++              >
++                <option value="router">
++                  {nls.localize('arduino/preferences/mcp.toolMode.router', 'Router (4 meta-tools, recommended)')}
++                </option>
++                <option value="direct">
++                  {nls.localize('arduino/preferences/mcp.toolMode.direct', 'Direct (all tools exposed)')}
++                </option>
++              </select>
++            </div>
++          </div>
++        </div>
++
++        <div style={{ marginTop: '16px', padding: '12px', background: 'var(--theia-editor-background)', borderRadius: '4px' }}>
++          <div style={{ fontSize: '12px', opacity: 0.8 }}>
++            {nls.localize('arduino/preferences/mcp.connectionInfo', 'To connect Claude Code, add to your MCP configuration:')}
++          </div>
++          <code style={{ display: 'block', marginTop: '8px', fontSize: '11px', wordBreak: 'break-all' }}>
++            http://127.0.0.1:{this.state.mcpPort}/sse
++          </code>
++        </div>
++      </div>
++    );
++  }
++
+   private isControlKey(event: React.KeyboardEvent<HTMLInputElement>): boolean {
+     return (
+       !!event.key &&
+@@ -787,6 +890,42 @@ export class SettingsComponent extends React.Component<
+     const copyNetwork = deepClone(network);
+     return copyNetwork;
+   }
++
++  // MCP Settings handlers
++  protected mcpEnabledDidChange = (
++    event: React.ChangeEvent<HTMLInputElement>
++  ): void => {
++    this.setState({ mcpEnabled: event.target.checked });
++  };
++
++  protected mcpAutoConnectDidChange = (
++    event: React.ChangeEvent<HTMLInputElement>
++  ): void => {
++    this.setState({ mcpAutoConnect: event.target.checked });
++  };
++
++  protected mcpPortDidChange = (
++    event: React.ChangeEvent<HTMLInputElement>
++  ): void => {
++    const port = parseInt(event.target.value, 10);
++    if (!isNaN(port) && port >= 1024 && port <= 65535) {
++      this.setState({ mcpPort: port });
++    }
++  };
++
++  protected mcpLogLevelDidChange = (
++    event: React.ChangeEvent<HTMLSelectElement>
++  ): void => {
++    const logLevel = event.target.value as 'none' | 'error' | 'info' | 'debug';
++    this.setState({ mcpLogLevel: logLevel });
++  };
++
++  protected mcpToolModeDidChange = (
++    event: React.ChangeEvent<HTMLSelectElement>
++  ): void => {
++    const toolMode = event.target.value as 'router' | 'direct';
++    this.setState({ mcpToolMode: toolMode });
++  };
+ }
+ export namespace SettingsComponent {
+   export interface Props {
+diff --git a/arduino-ide-extension/src/browser/dialogs/settings/settings.ts b/arduino-ide-extension/src/browser/dialogs/settings/settings.ts
+index f6f2b88..8da0473 100644
+--- a/arduino-ide-extension/src/browser/dialogs/settings/settings.ts
++++ b/arduino-ide-extension/src/browser/dialogs/settings/settings.ts
+@@ -47,6 +47,14 @@ export const UPLOAD_VERBOSE_SETTING = `${UPLOAD_SETTING}.verbose`;
+ export const UPLOAD_VERIFY_SETTING = `${UPLOAD_SETTING}.verify`;
+ export const SHOW_ALL_FILES_SETTING = `${SKETCHBOOK_SETTING}.showAllFiles`;
+ 
++// MCP Settings
++export const MCP_SETTING = `${ARDUINO_SETTING}.mcp`;
++export const MCP_ENABLED_SETTING = `${MCP_SETTING}.enabled`;
++export const MCP_AUTO_CONNECT_SETTING = `${MCP_SETTING}.autoConnect`;
++export const MCP_PORT_SETTING = `${MCP_SETTING}.port`;
++export const MCP_LOG_LEVEL_SETTING = `${MCP_SETTING}.logLevel`;
++export const MCP_TOOL_MODE_SETTING = `${MCP_SETTING}.toolMode`;
++
+ export interface Settings {
+   editorFontSize: number; // `editor.fontSize`
+   themeId: string; // `workbench.colorTheme`
+@@ -67,6 +75,13 @@ export interface Settings {
+   sketchbookPath: string; // CLI
+   additionalUrls: AdditionalUrls; // CLI
+   network: Network; // CLI
++
++  // MCP (Model Context Protocol) settings
++  mcpEnabled: boolean; // `arduino.mcp.enabled`
++  mcpAutoConnect: boolean; // `arduino.mcp.autoConnect`
++  mcpPort: number; // `arduino.mcp.port`
++  mcpLogLevel: 'none' | 'error' | 'info' | 'debug'; // `arduino.mcp.logLevel`
++  mcpToolMode: 'router' | 'direct'; // `arduino.mcp.toolMode`
+ }
+ export namespace Settings {
+   export function belongsToCli<K extends keyof Settings>(key: K): boolean {
+@@ -153,6 +168,11 @@ export class SettingsService {
+       verifyAfterUpload,
+       sketchbookShowAllFiles,
+       cliConfig,
++      mcpEnabled,
++      mcpAutoConnect,
++      mcpPort,
++      mcpLogLevel,
++      mcpToolMode,
+     ] = await Promise.all([
+       ['en', ...(await this.localizationProvider.getAvailableLanguages())],
+       this.localizationProvider.getCurrentLanguage(),
+@@ -182,6 +202,11 @@ export class SettingsService {
+       this.preferenceService.get<boolean>(UPLOAD_VERIFY_SETTING, true),
+       this.preferenceService.get<boolean>(SHOW_ALL_FILES_SETTING, false),
+       this.configService.getConfiguration(),
++      this.preferenceService.get<boolean>(MCP_ENABLED_SETTING, true),
++      this.preferenceService.get<boolean>(MCP_AUTO_CONNECT_SETTING, true),
++      this.preferenceService.get<number>(MCP_PORT_SETTING, 3847),
++      this.preferenceService.get<'none' | 'error' | 'info' | 'debug'>(MCP_LOG_LEVEL_SETTING, 'info'),
++      this.preferenceService.get<'router' | 'direct'>(MCP_TOOL_MODE_SETTING, 'router'),
+     ]);
+     const {
+       config = {
+@@ -210,6 +235,11 @@ export class SettingsService {
+       additionalUrls,
+       sketchbookPath,
+       network,
++      mcpEnabled,
++      mcpAutoConnect,
++      mcpPort,
++      mcpLogLevel,
++      mcpToolMode,
+     };
+   }
+ 
+@@ -297,6 +327,11 @@ export class SettingsService {
+       additionalUrls,
+       network,
+       sketchbookShowAllFiles,
++      mcpEnabled,
++      mcpAutoConnect,
++      mcpPort,
++      mcpLogLevel,
++      mcpToolMode,
+     } = this._settings;
+     const [cliConfig, sketchDirUri] = await Promise.all([
+       this.configService.getConfiguration(),
+@@ -328,6 +363,11 @@ export class SettingsService {
+       this.savePreference(UPLOAD_VERBOSE_SETTING, verboseOnUpload),
+       this.savePreference(UPLOAD_VERIFY_SETTING, verifyAfterUpload),
+       this.savePreference(SHOW_ALL_FILES_SETTING, sketchbookShowAllFiles),
++      this.savePreference(MCP_ENABLED_SETTING, mcpEnabled),
++      this.savePreference(MCP_AUTO_CONNECT_SETTING, mcpAutoConnect),
++      this.savePreference(MCP_PORT_SETTING, mcpPort),
++      this.savePreference(MCP_LOG_LEVEL_SETTING, mcpLogLevel),
++      this.savePreference(MCP_TOOL_MODE_SETTING, mcpToolMode),
+       this.configService.setConfiguration(config),
+     ]);
+     this.onDidChangeEmitter.fire(this._settings);
+diff --git a/arduino-ide-extension/src/browser/style/boards-config-dialog.css b/arduino-ide-extension/src/browser/style/boards-config-dialog.css
+index cc86271..d1a2f8c 100644
+--- a/arduino-ide-extension/src/browser/style/boards-config-dialog.css
++++ b/arduino-ide-extension/src/browser/style/boards-config-dialog.css
+@@ -159,7 +159,7 @@ div#select-board-dialog .selectBoardContainer .list .item.selected i {
+ .arduino-boards-toolbar-item-container {
+     align-items: center;
+     background: var(--theia-arduino-toolbar-dropdown-background);
+-    border-radius: 1px;
++    border-radius: var(--arduino-radius-md);
+     color: var(--theia-arduino-toolbar-dropdown-label);
+     border: 1px solid var(--theia-arduino-toolbar-dropdown-border);
+     display: flex;
+@@ -169,6 +169,13 @@ div#select-board-dialog .selectBoardContainer .list .item.selected i {
+     overflow: hidden;
+     padding: 0 10px;
+     width: 210px;
++    box-shadow: var(--arduino-shadow-sm);
++    transition: all var(--arduino-transition-base);
++}
++
++.arduino-boards-toolbar-item-container:hover {
++    box-shadow: var(--arduino-shadow-md);
++    border-color: var(--theia-arduino-toolbar-dropdown-borderActive);
+ }
+ 
+ .arduino-boards-toolbar-item--protocol,
+@@ -213,6 +220,9 @@ div#select-board-dialog .selectBoardContainer .list .item.selected i {
+     font-style: normal;
+     font-weight: 400;
+     font-size: 12px;
++    box-shadow: var(--arduino-shadow-lg);
++    border-radius: var(--arduino-radius-md);
++    overflow: hidden;
+ }
+ 
+ .arduino-boards-dropdown-list:focus {
+@@ -236,7 +246,8 @@ div#select-board-dialog .selectBoardContainer .list .item.selected i {
+     display: flex;
+     font-size: var(--theia-ui-font-size1);
+     justify-content: space-between;
+-    padding: 10px;
++    padding: var(--arduino-space-md);
++    transition: all var(--arduino-transition-fast);
+ }
+ 
+ .arduino-boards-dropdown-item--board-header {
+@@ -282,13 +293,15 @@ div#select-board-dialog .selectBoardContainer .list .item.selected i {
+ 
+ .arduino-boards-dropdown-item:hover {
+     background: var(--theia-arduino-toolbar-dropdown-option-backgroundHover);
++    padding-left: calc(var(--arduino-space-md) + 3px);
++    border-left: 3px solid var(--theia-arduino-branding-primary);
+ }
+ 
+ .arduino-boards-dropdown-item--selected,
+ .arduino-boards-dropdown-item--selected:hover {
+     background: var(--theia-arduino-toolbar-dropdown-option-backgroundSelected);
+-    border: 1px solid
+-        var(--theia-arduino-toolbar-dropdown-option-backgroundSelected);
++    border-left: 3px solid var(--theia-arduino-branding-primary);
++    font-weight: 600;
+ }
+ 
+ .arduino-boards-dropdown-item--selected
+diff --git a/arduino-ide-extension/src/browser/style/dialogs.css b/arduino-ide-extension/src/browser/style/dialogs.css
+index 1592057..cbb8dbc 100644
+--- a/arduino-ide-extension/src/browser/style/dialogs.css
++++ b/arduino-ide-extension/src/browser/style/dialogs.css
+@@ -1,9 +1,11 @@
+ .p-Widget.dialogOverlay .dialogBlock {
+-    border-radius: 3px;
+-    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.25);
++    border-radius: var(--arduino-radius-lg);
++    box-shadow: var(--arduino-shadow-lg);
+     margin: 15px 20px;
++    border: 1px solid rgba(0, 129, 132, 0.1);
++    animation: dialog-enter var(--arduino-transition-base);
+ 
+-    /* 
++    /*
+        padding (left + right) = 56px
+        margin (left + right) = 40px
+        total = padding + margin = 96px
+@@ -15,18 +17,38 @@
+     padding: 0 var(--arduino-button-height);
+ }
+ 
++@keyframes dialog-enter {
++    from {
++        opacity: 0;
++        transform: scale(0.96) translateY(-10px);
++    }
++    to {
++        opacity: 1;
++        transform: scale(1) translateY(0);
++    }
++}
++
+ .p-Widget.dialogOverlay .dialogBlock .dialogTitle {
+     padding: 20px 0;
+-    font-weight: 500;
++    font-weight: 600;
+     background-color: transparent;
+-    font-size: var(--theia-ui-font-size2);
++    font-size: 16px;
+     color: var(--theia-editorWidget-foreground);
+     min-height: 0;
++    border-bottom: 1px solid var(--theia-arduino-toolbar-dropdown-border);
++    padding-bottom: var(--arduino-space-md);
++    margin-bottom: var(--arduino-space-md);
+ }
+ 
+ .p-Widget.dialogOverlay .dialogBlock .dialogControl {
+     padding: 0 0 36px;
+     min-height: 0;
++    border-top: 1px solid var(--theia-arduino-toolbar-dropdown-border);
++    padding-top: var(--arduino-space-lg);
++    margin-top: var(--arduino-space-md);
++    display: flex;
++    gap: var(--arduino-space-sm);
++    justify-content: flex-end;
+ }
+ 
+ .p-Widget.dialogOverlay .dialogBlock .dialogContent {
+diff --git a/arduino-ide-extension/src/browser/style/index.css b/arduino-ide-extension/src/browser/style/index.css
+index fd7887a..8b253ca 100644
+--- a/arduino-ide-extension/src/browser/style/index.css
++++ b/arduino-ide-extension/src/browser/style/index.css
+@@ -22,6 +22,42 @@
+ 
+ :root {
+     --arduino-button-height: 28px;
++
++    /* Spacing System */
++    --arduino-space-xs: 4px;
++    --arduino-space-sm: 8px;
++    --arduino-space-md: 12px;
++    --arduino-space-lg: 16px;
++    --arduino-space-xl: 24px;
++
++    /* Border Radius System */
++    --arduino-radius-sm: 4px;
++    --arduino-radius-md: 6px;
++    --arduino-radius-lg: 8px;
++    --arduino-radius-pill: 14px;
++
++    /* Shadow System */
++    --arduino-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
++    --arduino-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.1);
++    --arduino-shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.15);
++    --arduino-shadow-focus: 0 0 0 3px rgba(0, 129, 132, 0.25);
++
++    /* Transition System */
++    --arduino-transition-fast: 150ms ease;
++    --arduino-transition-base: 200ms ease;
++
++    /* Typography */
++    --arduino-font-size-xs: 11px;
++    --arduino-font-size-sm: 12px;
++    --arduino-font-size-base: 13px;
++}
++
++/* Dark theme shadow adjustments */
++body.theia-dark {
++    --arduino-shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.2);
++    --arduino-shadow-md: 0 2px 8px rgba(0, 0, 0, 0.3);
++    --arduino-shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.4);
++    --arduino-shadow-focus: 0 0 0 3px rgba(12, 161, 166, 0.3);
+ }
+ 
+ /* Revive of the `--theia-icon-loading`. The variable has been removed from Theia while IDE2 still uses is. */
+@@ -72,6 +108,23 @@ body.theia-dark {
+     background-color: var(--theia-errorBackground);
+ }
+ 
++/* Enhanced input styling */
++.theia-input,
++input[type="text"],
++input[type="number"] {
++    border-radius: var(--arduino-radius-md);
++    transition: all var(--arduino-transition-base);
++    padding: var(--arduino-space-sm) var(--arduino-space-md);
++}
++
++.theia-input:focus,
++input[type="text"]:focus,
++input[type="number"]:focus {
++    border-color: var(--theia-focusBorder);
++    box-shadow: var(--arduino-shadow-focus);
++    outline: none;
++}
++
+ /* Makes the sidepanel a bit wider when opening the widget */
+ .p-DockPanel-widget {
+     min-width: 220px;
+@@ -85,23 +138,24 @@ button.theia-button,
+     align-items: center;
+     display: flex;
+     font-family: "Open Sans Bold", sans-serif;
+-    font-style: normal;
+     font-weight: 700;
+-    font-size: 14px;
++    font-size: var(--arduino-font-size-base);
+     justify-content: center;
+     cursor: pointer;
+     letter-spacing: 0.01em;
+     line-height: 24px;
+     outline: none;
+-    padding: 0 16px;
+-    position: relative;
++    padding: 0 var(--arduino-space-lg);
+     text-align: center;
+     text-decoration: none;
+     border-width: 2px;
+-    border-radius: 32px;
++    border-style: solid;
+     text-transform: uppercase;
+-    transition: none;
+-    box-shadow: none;
++
++    /* Modern updates */
++    border-radius: var(--arduino-radius-md);
++    transition: all var(--arduino-transition-base);
++    box-shadow: var(--arduino-shadow-sm);
+ }
+ 
+ button.theia-button {
+@@ -109,18 +163,38 @@ button.theia-button {
+     max-width: none;
+ }
+ 
+-.theia-button:active,
++button.theia-button:hover:not([disabled]) {
++    box-shadow: var(--arduino-shadow-md);
++    transform: translateY(-1px);
++}
++
++button.theia-button:active:not([disabled]) {
++    transform: translateY(0);
++    box-shadow: var(--arduino-shadow-sm);
++}
++
+ .theia-button:focus {
+-    box-shadow: 0 0 0 2px var(--theia-focusBorder);
++    box-shadow: var(--arduino-shadow-focus);
++    outline: none;
+ }
+ 
+ button.theia-button.secondary {
+     border: 2px solid var(--theia-secondaryButton-foreground);
++    background: transparent;
++    box-shadow: none;
++}
++
++button.theia-button.secondary:hover:not([disabled]) {
++    background: var(--theia-secondaryButton-hoverBackground);
++    box-shadow: var(--arduino-shadow-sm);
+ }
+ 
+ button.theia-button[disabled],
+ .theia-button[disabled] {
+-    opacity: 0.5;
++    opacity: 0.4;
++    cursor: not-allowed;
++    box-shadow: none;
++    transform: none;
+     color: var(--theia-button-foreground);
+     background-color: var(--theia-button-background);
+ }
+diff --git a/arduino-ide-extension/src/browser/style/list-widget.css b/arduino-ide-extension/src/browser/style/list-widget.css
+index 2c74ec8..4965952 100644
+--- a/arduino-ide-extension/src/browser/style/list-widget.css
++++ b/arduino-ide-extension/src/browser/style/list-widget.css
+@@ -9,10 +9,13 @@
+ 
+ .arduino-list-widget .search-bar {
+     margin: 0px 10px 5px 15px;
++    border-radius: var(--arduino-radius-md);
++    transition: all var(--arduino-transition-base);
+ }
+ 
+ .arduino-list-widget .search-bar:focus {
+     border-color: var(--theia-focusBorder);
++    box-shadow: var(--arduino-shadow-focus);
+ }
+ 
+ .arduino-list-widget .filter-bar {
+@@ -46,6 +49,12 @@
+ 
+ .component-list-item {
+     padding: 20px 15px 25px;
++    transition: all var(--arduino-transition-base);
++    border-bottom: 1px solid rgba(0, 129, 132, 0.08);
++}
++
++.component-list-item:hover {
++    background: var(--theia-list-hoverBackground);
+ }
+ 
+ .component-list-item .header {
+@@ -86,6 +95,11 @@
+     font-style: normal;
+     font-weight: 700;
+     font-size: 14px;
++    transition: color var(--arduino-transition-fast);
++}
++
++.component-list-item:hover .header .title .name {
++    color: var(--theia-arduino-branding-primary);
+ }
+ 
+ .component-list-item .header .version {
+diff --git a/arduino-ide-extension/src/browser/style/main.css b/arduino-ide-extension/src/browser/style/main.css
+index 942d3c6..00c25ff 100644
+--- a/arduino-ide-extension/src/browser/style/main.css
++++ b/arduino-ide-extension/src/browser/style/main.css
+@@ -15,6 +15,7 @@
+ 
+ .p-TabBar-toolbar .item.arduino-tool-item {
+     margin-left: 0;
++    transition: transform var(--arduino-transition-fast);
+ }
+ 
+ .p-TabBar-toolbar .item.arduino-tool-item .toggle-serial-monitor,
+@@ -30,16 +31,21 @@
+     align-items: center;
+     height: var(--arduino-button-height);
+     width: var(--arduino-button-height);
++    transition: all var(--arduino-transition-base);
++    border-radius: var(--arduino-radius-pill);
+ }
+ 
+ .p-TabBar-toolbar .item.arduino-tool-item .arduino-upload-sketch--toolbar,
+ .p-TabBar-toolbar .item.arduino-tool-item .arduino-verify-sketch--toolbar,
+ .p-TabBar-toolbar .item.arduino-tool-item .arduino-start-debug {
+     background: var(--theia-arduino-toolbar-button-background);
++    box-shadow: var(--arduino-shadow-sm);
+ }
+ 
+ .p-TabBar-toolbar .item.arduino-tool-item.enabled:hover > div {
+     background: var(--theia-arduino-toolbar-button-hoverBackground);
++    box-shadow: var(--arduino-shadow-md);
++    transform: scale(1.05);
+ }
+ 
+ .p-TabBar-toolbar
+@@ -51,7 +57,8 @@
+     background-color: var(
+         --theia-arduino-toolbar-button-secondary-hoverBackground
+     );
+-    border-radius: 14px;
++    border-radius: var(--arduino-radius-pill);
++    box-shadow: var(--arduino-shadow-sm);
+ }
+ 
+ .arduino-verify-sketch--toolbar,
+@@ -74,6 +81,11 @@
+ .arduino-tool-icon {
+     height: var(--arduino-button-height);
+     width: var(--arduino-button-height);
++    transition: transform var(--arduino-transition-fast);
++}
++
++.p-TabBar-toolbar .item.arduino-tool-item.enabled:hover .arduino-tool-icon {
++    transform: scale(1.1);
+ }
+ 
+ .arduino-verify-sketch--toolbar-icon {
+diff --git a/arduino-ide-extension/src/browser/style/monitor.css b/arduino-ide-extension/src/browser/style/monitor.css
+index 3ee6e65..1849858 100644
+--- a/arduino-ide-extension/src/browser/style/monitor.css
++++ b/arduino-ide-extension/src/browser/style/monitor.css
+@@ -23,6 +23,8 @@
+     padding: 0px 5px 5px 5px;
+     height: 27px;
+     background-color: var(--theia-activityBar-background);
++    border-bottom: 1px solid var(--theia-arduino-toolbar-dropdown-border);
++    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+ }
+ 
+ .serial-monitor .head .send {
+@@ -52,6 +54,8 @@
+     line-height: var(--theia-content-line-height);
+     height: 27px;
+     width: 100%;
++    border-radius: var(--arduino-radius-md);
++    transition: all var(--arduino-transition-base);
+ }
+ 
+ .serial-monitor .head .send > label > input {
+@@ -62,6 +66,7 @@
+ .serial-monitor .head .send > input:focus,
+ .serial-monitor .head .send > label > input:focus {
+     border-color: var(--theia-focusBorder);
++    box-shadow: var(--arduino-shadow-focus);
+ }
+ 
+ .serial-monitor .head .config {
+@@ -76,6 +81,17 @@
+     overflow: auto;
+     flex: 1;
+     padding: 5px;
++    scrollbar-width: thin;
++    scrollbar-color: var(--theia-arduino-branding-primary) transparent;
++}
++
++.serial-monitor .body::-webkit-scrollbar {
++    width: 8px;
++}
++
++.serial-monitor .body::-webkit-scrollbar-thumb {
++    background: var(--theia-arduino-branding-primary);
++    border-radius: 4px;
+ }
+ 
+ .p-TabBar-toolbar .item.arduino-monitor {
+diff --git a/arduino-ide-extension/src/browser/style/progress-bar.css b/arduino-ide-extension/src/browser/style/progress-bar.css
+index 7ccc816..a9d8345 100644
+--- a/arduino-ide-extension/src/browser/style/progress-bar.css
++++ b/arduino-ide-extension/src/browser/style/progress-bar.css
+@@ -4,17 +4,38 @@
+ 
+ .progress-bar--outer {
+     background: var(--theia-editorWidget-background);
+-    border-radius: 11px;
++    border-radius: var(--arduino-radius-pill);
+     height: 6px;
+     position: relative;
+     overflow: hidden;
++    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+ }
+ 
+ .progress-bar--inner {
+-    transition: width 1s;
+     height: 100%;
+-    background: var(--theia-progressBar-background);
+-    border-radius: 11px;
++    border-radius: var(--arduino-radius-pill);
++    background: linear-gradient(90deg,
++        var(--theia-progressBar-background),
++        var(--theia-arduino-branding-primary)
++    );
++    transition: width var(--arduino-transition-base);
++    position: relative;
++}
++
++/* Shimmer effect */
++.progress-bar--inner::after {
++    content: "";
++    position: absolute;
++    top: 0;
++    left: -100%;
++    width: 100%;
++    height: 100%;
++    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
++    animation: shimmer 1.5s infinite;
++}
++
++@keyframes shimmer {
++    100% { left: 100%; }
+ }
+ 
+ .progress-bar--percentage {
+diff --git a/arduino-ide-extension/src/browser/style/status-bar.css b/arduino-ide-extension/src/browser/style/status-bar.css
+index de464c2..d5054e6 100644
+--- a/arduino-ide-extension/src/browser/style/status-bar.css
++++ b/arduino-ide-extension/src/browser/style/status-bar.css
+@@ -5,3 +5,16 @@
+ #theia-statusBar .area .element.arduino-selected-board > *:last-child {
+     margin-right: 0px;
+ }
++
++#theia-statusBar .area .element.arduino-selected-port,
++#theia-statusBar .area .element.arduino-selected-board {
++    padding: 2px var(--arduino-space-sm);
++    border-radius: var(--arduino-radius-sm);
++    background: rgba(0, 129, 132, 0.1);
++    transition: all var(--arduino-transition-base);
++}
++
++#theia-statusBar .area .element.arduino-selected-port:hover,
++#theia-statusBar .area .element.arduino-selected-board:hover {
++    background: rgba(0, 129, 132, 0.2);
++}
+diff --git a/arduino-mcp-extension/src/browser/mcp-preferences.ts b/arduino-mcp-extension/src/browser/mcp-preferences.ts
+index c2beb1d..b08f190 100644
+--- a/arduino-mcp-extension/src/browser/mcp-preferences.ts
++++ b/arduino-mcp-extension/src/browser/mcp-preferences.ts
+@@ -123,20 +123,14 @@ export function createMCPPreferences(
+  * Bind MCP preferences to the DI container
+  */
+ export function bindMCPPreferences(bind: interfaces.Bind): void {
+-  bind(MCPPreferenceContribution).toConstantValue({
+-    schema: mcpPreferenceSchema,
+-  });
+-
+-  bind(PreferenceContribution).toService(MCPPreferenceContribution);
+-
++  // Bind preferences proxy
+   bind(MCPPreferences).toDynamicValue((ctx) => {
+     const preferences = ctx.container.get<PreferenceService>(PreferenceService);
+-    const contribution = ctx.container.get<PreferenceContribution>(
+-      MCPPreferenceContribution
+-    );
+-    return createMCPPreferences(preferences, contribution.schema);
++    return createMCPPreferences(preferences, mcpPreferenceSchema);
+   }).inSingletonScope();
+-}
+ 
+-export const MCPPreferenceContribution = Symbol('MCPPreferenceContribution');
+-export interface MCPPreferenceContribution extends PreferenceContribution {}
++  // Register the preference schema contribution
++  bind(PreferenceContribution).toConstantValue({
++    schema: mcpPreferenceSchema,
++  });
++}
+-- 
+2.43.0
+
