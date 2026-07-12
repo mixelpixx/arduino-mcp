@@ -22,6 +22,7 @@ export interface MCPConfiguration {
   'arduino.mcp.enabled': boolean;
   'arduino.mcp.autoConnect': boolean;
   'arduino.mcp.port': number;
+  'arduino.mcp.requireAuth': boolean;
   'arduino.mcp.logLevel': 'none' | 'error' | 'info' | 'debug';
   'arduino.mcp.toolMode': 'router' | 'direct';
 }
@@ -33,6 +34,7 @@ export const MCPConfigurationDefaults: MCPConfiguration = {
   'arduino.mcp.enabled': true,
   'arduino.mcp.autoConnect': true,
   'arduino.mcp.port': 3847,
+  'arduino.mcp.requireAuth': true,
   'arduino.mcp.logLevel': 'info',
   'arduino.mcp.toolMode': 'router',
 };
@@ -66,12 +68,21 @@ export const mcpPreferenceSchema: PreferenceSchema = {
       type: 'number',
       description: nls.localize(
         'arduino/mcp/preferences.port',
-        'HTTP port for the MCP server. Claude Code connects to http://127.0.0.1:{port}/sse. Change this if port 3847 is already in use. Requires restart.'
+        'HTTP port for the MCP server. Claude Code connects to http://127.0.0.1:{port}/mcp. Change this if port 3847 is already in use. The server restarts on the new port immediately.'
       ),
       default: MCPConfigurationDefaults['arduino.mcp.port'],
       minimum: 1024,
       maximum: 65535,
       order: 3,
+    },
+    'arduino.mcp.requireAuth': {
+      type: 'boolean',
+      description: nls.localize(
+        'arduino/mcp/preferences.requireAuth',
+        'Require an authentication token for MCP connections (recommended). The token is stored in ~/.arduinoIDE/mcp-token and included in the connection snippet shown by the IDE. Only disable this on fully trusted machines. Takes effect after restarting the IDE.'
+      ),
+      default: MCPConfigurationDefaults['arduino.mcp.requireAuth'],
+      order: 4,
     },
     'arduino.mcp.logLevel': {
       type: 'string',
@@ -87,7 +98,7 @@ export const mcpPreferenceSchema: PreferenceSchema = {
         'Log level for MCP server messages. Check the Developer Tools console (View > Toggle Developer Tools) to see logs.'
       ),
       default: MCPConfigurationDefaults['arduino.mcp.logLevel'],
-      order: 4,
+      order: 5,
     },
     'arduino.mcp.toolMode': {
       type: 'string',
@@ -101,7 +112,7 @@ export const mcpPreferenceSchema: PreferenceSchema = {
         'Tool exposure mode. Router mode (recommended) exposes 4 meta-tools to minimize LLM context window usage. Direct mode exposes all individual tools for simpler prompting. Requires MCP reconnection to take effect.'
       ),
       default: MCPConfigurationDefaults['arduino.mcp.toolMode'],
-      order: 5,
+      order: 6,
     },
   },
 };

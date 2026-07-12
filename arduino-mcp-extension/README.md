@@ -6,13 +6,14 @@ Designed with **STEM education** in mind - includes built-in example browsing, h
 
 ## Architecture
 
-The extension embeds the MCP server directly in the IDE using HTTP/SSE transport:
+The extension embeds the MCP server directly in the IDE using HTTP transport
+(Streamable HTTP at `/mcp`, plus the legacy SSE transport at `/sse` for older clients):
 
 ```
-+------------------+        HTTP/SSE         +------------------+
++------------------+     HTTP (Bearer auth)  +------------------+
 |   Claude Code    |<----------------------->|   Arduino IDE    |
 |   (MCP Client)   |   http://127.0.0.1:3847 |   (MCP Server)   |
-+------------------+                         +------------------+
++------------------+          /mcp           +------------------+
                                                       ↓
                                              Arduino Services
                                             (Sketches, Boards,
@@ -22,6 +23,18 @@ The extension embeds the MCP server directly in the IDE using HTTP/SSE transport
 ```
 
 **The Arduino IDE IS the MCP server** - no sidecar process, no abstraction layer.
+
+## Security
+
+- The server binds to `127.0.0.1` only and **requires a bearer token** by default.
+  The token is generated on first start and stored in `~/.arduinoIDE/mcp-token`;
+  the IDE logs a ready-to-paste client configuration on startup.
+- Requests carrying a browser `Origin` header are rejected and no CORS headers are
+  sent, so web pages cannot reach the server.
+- File access through MCP tools is restricted to the sketchbook, the built-in
+  examples (read-only), and temporary sketches. Set `ARDUINO_MCP_UNRESTRICTED_FS=1`
+  to lift the restriction (not recommended).
+- Multiple MCP clients can be connected at the same time; each gets its own session.
 
 ### Why Embedded?
 
@@ -137,10 +150,11 @@ Transforms cryptic compiler output into understandable messages with suggested f
 
 ```bash
 # Clone the repository
-git clone https://github.com/your-repo/arduino-ide.git
-cd arduino-ide
+git clone https://github.com/mixelpixx/arduino-mcp.git
+cd arduino-mcp
 
-# Install dependencies
+# Install dependencies (Yarn 4 via corepack)
+corepack enable
 yarn install
 
 # Build all packages
@@ -153,23 +167,27 @@ yarn start
 
 ### Configure Claude Code
 
-Add the following to your Claude Code MCP configuration:
-
-| Platform | Configuration Path |
-|----------|-------------------|
-| Linux | `~/.config/claude-code/settings.json` |
-| macOS | `~/Library/Application Support/claude-code/settings.json` |
-| Windows | `%APPDATA%\claude-code\settings.json` |
+When the IDE starts, it prints a ready-to-paste configuration (including your auth
+token) to the console and shows it when you toggle the MCP preference. It looks like:
 
 ```json
 {
   "mcpServers": {
     "arduino": {
-      "url": "http://127.0.0.1:3847/sse"
+      "type": "http",
+      "url": "http://127.0.0.1:3847/mcp",
+      "headers": {
+        "Authorization": "Bearer <token from ~/.arduinoIDE/mcp-token>"
+      }
     }
   }
 }
 ```
+
+Add it to your project's `.mcp.json` (or use `claude mcp add --transport http arduino http://127.0.0.1:3847/mcp --header "Authorization: Bearer <token>"`).
+
+Clients that only support the older SSE transport can use `http://127.0.0.1:3847/sse`
+(append `?token=<token>` if they cannot send headers).
 
 **Note:** The MCP server runs on port 3847 by default. You can change this in Arduino IDE preferences.
 
@@ -181,7 +199,8 @@ Access via **File > Preferences > Settings**, search for "MCP":
 |---------|-------------|---------|
 | `arduino.mcp.enabled` | Enable/disable MCP server | `true` |
 | `arduino.mcp.autoConnect` | Auto-start MCP server on IDE launch | `true` |
-| `arduino.mcp.port` | HTTP port for MCP server | `3847` |
+| `arduino.mcp.port` | HTTP port for MCP server (restarts the server immediately) | `3847` |
+| `arduino.mcp.requireAuth` | Require the bearer token for connections (change needs IDE restart) | `true` |
 | `arduino.mcp.logLevel` | Logging verbosity (none, error, info, debug) | `info` |
 | `arduino.mcp.toolMode` | Tool exposure mode (router or direct) | `router` |
 
@@ -229,19 +248,14 @@ Expected response:
 {
   "status": "ok",
   "server": "arduino-ide-mcp",
-  "version": "0.2.0",
+  "version": "0.5.0",
   "uptime": 123,
-  "services": {
-    "sketches": true,
-    "core": true,
-    "boards": true,
-    "library": true,
-    "monitor": true,
-    "formatter": true,
-    "config": true
-  }
+  "auth": true
 }
 ```
+
+The `/health` endpoint is the only unauthenticated endpoint; everything else
+requires the bearer token (unless `arduino.mcp.requireAuth` is disabled).
 
 ### Example Interactions
 
@@ -279,9 +293,8 @@ Expected response:
 
 | Action | Parameters | Description |
 |--------|------------|-------------|
-| `create` | `name` | Create new empty sketch |
+| `create` | `name` (optional) | Create new sketch (named in the sketchbook, or temporary) |
 | `open` | `path` | Open existing sketch |
-| `save` | `path` | Save current sketch |
 | `list` | - | List user sketches |
 | `get_current` | - | Get currently open sketch info |
 | `get_content` | `path` | Read file content |
@@ -296,9 +309,9 @@ Expected response:
 |--------|------------|-------------|
 | `list_connected` | - | List USB-connected boards |
 | `list_available` | - | List installed board definitions |
-| `get_selected` | - | Get currently selected board |
+| `get_selected` | - | Get the IDE board selection and the MCP session override |
 | `get_info` | `fqbn` | Get board specs and pin reference |
-| `select` | `fqbn`, `port` | Select board and port |
+| `select` | `fqbn`, `port` | Set the default board/port for this MCP session (does not change the IDE UI) |
 | `search` | `query` | Search board registry |
 | `install_core` | `core` | Install board support package |
 
@@ -335,9 +348,9 @@ Returns a task ID. Use `arduino_task_status` to monitor progress.
 | Action | Parameters | Description |
 |--------|------------|-------------|
 | `list_ports` | - | List available serial ports |
-| `connect` | `port`, `baud_rate` | Open connection |
+| `connect` | `port`, `baud_rate`, `fqbn` (optional) | Open connection |
 | `disconnect` | - | Close connection |
-| `read` | `timeout_ms`, `max_lines` | Read incoming data |
+| `read` | `max_lines` | Read buffered board output |
 | `write` | `data`, `line_ending` | Send data |
 | `clear` | - | Clear read buffer |
 | `get_config` | - | Get current connection config |
@@ -373,11 +386,10 @@ Returns a task ID. Use `arduino_task_status` to monitor progress.
 ### arduino_context
 
 Returns current IDE state including:
-- Open sketch information
-- Selected board and port
+- Open sketch information (from the IDE, or opened via MCP)
+- Selected board and port (IDE selection and MCP session override)
 - Connected boards
 - Serial monitor status
-- MCP transport type (`http/sse`)
 
 ### arduino_task_status
 
@@ -389,11 +401,16 @@ Returns task status: `pending`, `running`, `completed`, `failed`, or `cancelled`
 
 ## Environment Variables
 
+Environment variables override the IDE preferences:
+
 | Variable | Description | Default |
 |----------|-------------|---------|
 | `ARDUINO_MCP_DISABLED` | Set to `1` to disable MCP server | (enabled) |
 | `ARDUINO_MCP_PORT` | HTTP port for MCP server | `3847` |
 | `ARDUINO_MCP_AUTOSTART` | Set to `0` to disable auto-start | `1` |
+| `ARDUINO_MCP_TOKEN` | Use a specific auth token instead of the generated one | (generated) |
+| `ARDUINO_MCP_NO_AUTH` | Set to `1` to disable authentication (not recommended) | (auth on) |
+| `ARDUINO_MCP_UNRESTRICTED_FS` | Set to `1` to lift the sketchbook file-access sandbox (not recommended) | (sandboxed) |
 
 ## Development
 
@@ -408,12 +425,15 @@ arduino-mcp-extension/
 │   │   └── mcp-service.ts       # Service protocol definition
 │   ├── node/
 │   │   ├── arduino-mcp-backend-module.ts  # Inversify DI module
-│   │   ├── mcp-server.ts        # Embedded MCP server (HTTP/SSE)
+│   │   ├── mcp-server.ts        # Embedded MCP server (Streamable HTTP + SSE)
+│   │   ├── mcp-arduino-services.ts # DI child container + build output capture
+│   │   ├── mcp-serial-manager.ts   # Serial monitor client (WebSocket)
+│   │   ├── mcp-logger.ts        # Leveled logging
 │   │   ├── mcp-service-impl.ts  # MCPService implementation
-│   │   └── mcp-contribution.ts  # Backend lifecycle hooks
+│   │   └── mcp-contribution.ts  # Backend lifecycle hooks + startup prefs
 │   └── browser/
 │       ├── arduino-mcp-frontend-module.ts
-│       ├── mcp-frontend-contribution.ts  # Preference listener
+│       ├── mcp-frontend-contribution.ts  # Preference listener + IDE state sync
 │       └── mcp-preferences.ts   # Settings UI
 ├── lib/                         # Compiled output
 ├── package.json
@@ -430,6 +450,15 @@ yarn build
 # Build entire IDE with extension
 cd ..
 yarn build:dev
+```
+
+### Smoke Test
+
+With the IDE running, verify the MCP server end-to-end (health, auth, session,
+tool listing, context):
+
+```bash
+node test/manual/smoke-test.js
 ```
 
 ### Extending
@@ -458,13 +487,11 @@ Verify:
 curl http://127.0.0.1:3847/health
 ```
 
-**"Service not available"**
+**"401 Unauthorized"**
 
-Some services initialize asynchronously. Wait a few seconds after IDE startup and retry. Check the IDE console for service status:
-
-```
-[arduino-mcp] Services available: { sketches: true, core: true, boards: true, library: true, monitor: true, formatter: true, config: true }
-```
+Pass the auth token as an `Authorization: Bearer <token>` header (or `?token=` query
+parameter). The token is stored in `~/.arduinoIDE/mcp-token` and the full client
+configuration is printed to the IDE console on startup.
 
 ### Port Conflicts
 
@@ -485,19 +512,21 @@ Enable verbose logging:
 
 ## Tool Safety Annotations
 
-| Tool | Read-Only | Destructive | Side Effect | Confirmation |
-|------|-----------|-------------|-------------|--------------|
-| `arduino_sketch` | No | No | No | No |
-| `arduino_compile` | Yes | No | No | No |
-| `arduino_upload` | No | YES* | Yes | Yes |
-| `arduino_build_output` | Yes | No | No | No |
-| `arduino_board` | No | No | No | No |
-| `arduino_serial` | No | No | Yes | No |
-| `arduino_library` | No | No | Yes | Yes |
-| `arduino_context` | Yes | No | No | No |
-| `arduino_task_status` | Yes | No | No | No |
-| `arduino_format` | Yes | No | No | No |
-| `arduino_config` | No | No | Yes | No |
+Spec-compliant MCP annotations are sent to clients with every tool definition:
+
+| Tool | Read-Only | Destructive | Open World |
+|------|-----------|-------------|------------|
+| `arduino_sketch` | No | No | No |
+| `arduino_compile` | No | No | No |
+| `arduino_upload` | No | YES* | Yes |
+| `arduino_build_output` | Yes | No | No |
+| `arduino_board` | No | No | Yes |
+| `arduino_serial` | No | No | Yes |
+| `arduino_library` | No | No | Yes |
+| `arduino_context` | Yes | No | No |
+| `arduino_task_status` | Yes | No | No |
+| `arduino_format` | Yes | No | No |
+| `arduino_config` | No | No | No |
 
 *arduino_upload overwrites device firmware - use caution
 

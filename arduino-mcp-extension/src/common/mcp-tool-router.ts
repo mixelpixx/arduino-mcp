@@ -117,8 +117,10 @@ export const ROUTER_TOOLS: ToolDefinition[] = [
       required: ['tool_name', 'params'],
     },
     annotations: {
-      readOnlyHint: false, // Depends on the tool being executed
-      sideEffectHint: true,
+      // Effective safety depends on the tool being executed; assume the worst.
+      readOnlyHint: false,
+      destructiveHint: true,
+      openWorldHint: true,
     },
   },
   {

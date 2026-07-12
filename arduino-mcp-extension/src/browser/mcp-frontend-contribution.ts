@@ -3,6 +3,8 @@
  *
  * Handles frontend lifecycle and preference synchronization with backend.
  * When user changes MCP settings in preferences, this updates the backend.
+ * Pushes the IDE's actual state (current sketch, board/port selection) to
+ * the MCP server so AI clients see what the user sees.
  * Also handles real-time file change notifications from MCP tools.
  */
 
@@ -13,10 +15,23 @@ import { PreferenceService } from '@theia/core/lib/browser/preferences';
 import { MessageService } from '@theia/core/lib/common/message-service';
 import { EditorManager } from '@theia/editor/lib/browser/editor-manager';
 import URI from '@theia/core/lib/common/uri';
-import { MCPService, MCPServiceClient, MCPFileChangeEvent, MCPStatus } from '../common/mcp-service';
+import {
+  SketchesServiceClientImpl,
+  CurrentSketch,
+} from 'arduino-ide-extension/lib/browser/sketches-service-client-impl';
+import { BoardsServiceProvider } from 'arduino-ide-extension/lib/browser/boards/boards-service-provider';
+import {
+  MCPService,
+  MCPServiceClient,
+  MCPFileChangeEvent,
+  MCPIDEState,
+  MCPStatus,
+} from '../common/mcp-service';
 
 @injectable()
-export class MCPFrontendContribution implements FrontendApplicationContribution, MCPServiceClient {
+export class MCPFrontendContribution
+  implements FrontendApplicationContribution, MCPServiceClient
+{
   @inject(MCPService)
   private readonly mcpService!: MCPService;
 
@@ -29,6 +44,12 @@ export class MCPFrontendContribution implements FrontendApplicationContribution,
   @inject(EditorManager)
   private readonly editorManager!: EditorManager;
 
+  @inject(SketchesServiceClientImpl)
+  private readonly sketchesServiceClient!: SketchesServiceClientImpl;
+
+  @inject(BoardsServiceProvider)
+  private readonly boardsServiceProvider!: BoardsServiceProvider;
+
   // Track recent file changes to avoid notification spam
   private recentFileChanges = new Map<string, number>();
   private readonly NOTIFICATION_DEBOUNCE_MS = 2000;
@@ -37,10 +58,22 @@ export class MCPFrontendContribution implements FrontendApplicationContribution,
   protected init(): void {
     // Listen for preference changes
     this.preferenceService.onPreferenceChanged(event => {
-      if (event.preferenceName === 'arduino.mcp.enabled') {
-        this.handleMCPEnabledChange(event.newValue as boolean);
-      } else if (event.preferenceName === 'arduino.mcp.toolMode') {
-        this.handleToolModeChange(event.newValue as 'router' | 'direct');
+      switch (event.preferenceName) {
+        case 'arduino.mcp.enabled':
+          this.handleMCPEnabledChange(event.newValue as boolean);
+          break;
+        case 'arduino.mcp.toolMode':
+          this.handleToolModeChange(event.newValue as 'router' | 'direct');
+          break;
+        case 'arduino.mcp.port':
+          this.handlePortChange(event.newValue as number);
+          break;
+        case 'arduino.mcp.requireAuth':
+          this.messageService.info(
+            'The MCP authentication setting takes effect after restarting the Arduino IDE.',
+            { timeout: 8000 }
+          );
+          break;
       }
     });
   }
@@ -51,19 +84,26 @@ export class MCPFrontendContribution implements FrontendApplicationContribution,
     // Register this as the MCP service client to receive notifications
     try {
       this.mcpService.setClient(this);
-      console.log('[arduino-mcp] Registered as MCP service client');
     } catch (error) {
       console.error('[arduino-mcp] Error registering as client:', error);
     }
 
-    // Check initial MCP status
+    // Keep the MCP server in sync with the IDE state.
+    this.sketchesServiceClient.onCurrentSketchDidChange(() =>
+      this.pushIDEState()
+    );
+    this.boardsServiceProvider.onBoardsConfigDidChange(() =>
+      this.pushIDEState()
+    );
+    void this.pushIDEState();
+
+    // Log initial MCP status and the ready-to-paste client configuration.
     try {
       const status = await this.mcpService.getStatus();
       console.log('[arduino-mcp] Initial MCP status:', status);
-
       if (status.running) {
-        const url = await this.mcpService.getServerUrl();
-        console.log(`[arduino-mcp] MCP server available at: ${url}`);
+        const config = await this.mcpService.getClientConfig();
+        console.log(`[arduino-mcp] MCP client configuration:\n${config}`);
       }
     } catch (error) {
       console.error('[arduino-mcp] Error getting initial status:', error);
@@ -76,6 +116,37 @@ export class MCPFrontendContribution implements FrontendApplicationContribution,
       this.mcpService.setClient(undefined);
     } catch (error) {
       // Ignore errors during shutdown
+    }
+  }
+
+  // ============================================================
+  // IDE state synchronization
+  // ============================================================
+
+  private async pushIDEState(): Promise<void> {
+    try {
+      const state: MCPIDEState = {};
+
+      const currentSketch = this.sketchesServiceClient.tryGetCurrentSketch();
+      if (CurrentSketch.isValid(currentSketch)) {
+        state.sketchUri = currentSketch.uri;
+        state.sketchName = currentSketch.name;
+      }
+
+      const { selectedBoard, selectedPort } =
+        this.boardsServiceProvider.boardsConfig;
+      if (selectedBoard) {
+        state.boardFqbn = selectedBoard.fqbn ?? undefined;
+        state.boardName = selectedBoard.name;
+      }
+      if (selectedPort) {
+        state.portAddress = selectedPort.address;
+        state.portProtocol = selectedPort.protocol;
+      }
+
+      await this.mcpService.updateIDEState(state);
+    } catch (error) {
+      console.error('[arduino-mcp] Error pushing IDE state:', error);
     }
   }
 
@@ -157,10 +228,10 @@ export class MCPFrontendContribution implements FrontendApplicationContribution,
       await this.mcpService.setEnabled(enabled);
 
       if (enabled) {
-        const url = await this.mcpService.getServerUrl();
+        const config = await this.mcpService.getClientConfig();
         this.messageService.info(
-          `MCP server enabled. Configure Claude Code with: ${url}`,
-          { timeout: 10000 }
+          `MCP server enabled. Claude Code configuration:\n${config}`,
+          { timeout: 15000 }
         );
       } else {
         this.messageService.info('MCP server disabled.', { timeout: 5000 });
@@ -186,6 +257,23 @@ export class MCPFrontendContribution implements FrontendApplicationContribution,
     } catch (error) {
       console.error('[arduino-mcp] Error changing tool mode:', error);
       this.messageService.error(`Failed to change tool mode: ${error}`);
+    }
+  }
+
+  private async handlePortChange(port: number): Promise<void> {
+    if (!Number.isInteger(port) || port < 1024 || port > 65535) {
+      return;
+    }
+    try {
+      await this.mcpService.setPort(port);
+      const config = await this.mcpService.getClientConfig();
+      this.messageService.info(
+        `MCP server moved to port ${port}. Updated Claude Code configuration:\n${config}`,
+        { timeout: 15000 }
+      );
+    } catch (error) {
+      console.error('[arduino-mcp] Error changing MCP port:', error);
+      this.messageService.error(`Failed to change MCP port: ${error}`);
     }
   }
 
