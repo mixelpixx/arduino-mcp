@@ -1,232 +1,203 @@
-<img src="https://content.arduino.cc/website/Arduino_logo_teal.svg" height="100" align="right" />
+<img src="static/screenshot.png" align="right" width="380" />
 
-# Arduino IDE 2.x with AI Assistant Integration
+# Arduino Agent
 
-This fork of Arduino IDE 2.x includes an embedded **Model Context Protocol (MCP)** server, enabling AI assistants like Claude Code to programmatically interact with the IDE. Write code, compile, upload, and debug Arduino projects through natural language conversation.
+**The AI-native Arduino IDE.** Arduino Agent is a full Arduino IDE 2.x with a
+Model Context Protocol (MCP) server built into its core — so an AI agent like
+Claude can write sketches, compile them, upload to real boards, read the serial
+monitor, and manage libraries *alongside you*, editing the same files you see in
+the editor in real time.
+
+There's no plugin to install into the AI, no sidecar process, no copy-pasting
+code back and forth. **The IDE itself is the agent's workbench.** You launch it,
+point your assistant at `http://127.0.0.1:3847`, and the two of you share one
+editor, one board, one serial monitor.
+
+<sub>Built on [Arduino IDE 2.x](https://github.com/arduino/arduino-ide) · An
+independent community project, not affiliated with or endorsed by Arduino SA ·
+AGPL-3.0</sub>
 
 ---
 
-## AI Assistant Integration (MCP)
+## Why it exists
 
-### Overview
+The Arduino IDE is where embedded projects get built. Modern AI agents are great
+at embedded code — but they work blind, guessing at your board, your errors, and
+your wiring, and handing you snippets to paste. Arduino Agent closes that gap by
+making the IDE a first-class participant in the conversation:
 
-The MCP extension embeds a server directly into the Arduino IDE, providing AI assistants with complete access to the Arduino development workflow. No external processes, no complex setup - the IDE itself becomes the MCP server.
+- **The agent sees what you see** — the open sketch, the selected board and port,
+  connected devices, and real compiler output (not a guess).
+- **You see what the agent does** — when it writes a file, the editor opens it,
+  reloads it, and shows a *"Created by Claude"* notification. True pair
+  programming on hardware.
+- **It drives the real toolchain** — the same `arduino-cli`, clang-format, and
+  serial monitor the IDE uses. Compile results, memory usage, and upload status
+  are the genuine article.
 
-```
-+------------------+     HTTP (Bearer auth)  +------------------+
-|   Claude Code    |<----------------------->|   Arduino IDE    |
-|   (MCP Client)   |   http://127.0.0.1:3847 |   (MCP Server)   |
-+------------------+          /mcp           +------------------+
-                                                      |
-                                             Arduino Services
-                                            (Sketches, Boards,
-                                             Libraries, Serial,
-                                             Compiler, Config)
-```
+## Download
 
-The server binds to localhost only, requires a bearer token by default (stored in
-`~/.arduinoIDE/mcp-token`), rejects browser-originated requests, and restricts file
-access to the sketchbook and built-in examples.
+Grab an unsigned development build from the
+[**Releases**](https://github.com/mixelpixx/arduino-mcp/releases) page — Windows,
+macOS, and Linux archives are attached to each release. Unzip and run
+`Arduino IDE` (`Arduino IDE.exe` on Windows).
 
-### Key Capabilities
+> These are unsigned dev builds. On macOS you may need to allow the app under
+> **System Settings → Privacy & Security**; on Windows, dismiss SmartScreen with
+> **More info → Run anyway**. Prefer to build it yourself? See
+> [Building from source](#building-from-source).
 
-| Category | Operations |
-|----------|------------|
-| **Sketch Management** | Create, open, edit, save sketches; browse and clone built-in examples |
-| **Build Operations** | Compile sketches with async progress tracking; upload to boards |
-| **Board Management** | Detect connected boards; select board/port; install cores; query pin capabilities |
-| **Serial Monitor** | Connect, read, write, disconnect; configure baud rate and line endings |
-| **Library Management** | Search Arduino library registry; install/remove libraries; browse library examples |
-| **Code Formatting** | Format Arduino/C++ code using clang-format |
-| **Configuration** | Manage sketchbook location, board manager URLs, IDE settings |
+## Quick start — connect your agent
 
-### Real-Time Collaboration
+1. **Launch the IDE.** The MCP server starts automatically on
+   `http://127.0.0.1:3847` and prints a ready-to-paste client configuration —
+   including your auth token — to the console.
 
-When the AI assistant modifies code through MCP:
-- The IDE immediately opens and focuses the changed file
-- A notification appears showing what was created or modified
-- The editor auto-reloads content without manual refresh
+2. **Add it to your MCP client.** For Claude Code / Claude Desktop, drop this
+   into your `.mcp.json` (the token lives in `~/.arduinoIDE/mcp-token`):
 
-This provides a seamless pair-programming experience where you see changes as the AI makes them.
-
-### Tool Router Pattern
-
-To minimize context window usage, the MCP server uses a router pattern by default. Instead of exposing 11+ individual tools (which would consume significant context), it exposes 4 meta-tools:
-
-| Meta-Tool | Purpose |
-|-----------|---------|
-| `list_tool_categories` | List available categories (sketch, build, board, serial, library, ide) |
-| `get_category_tools` | Get detailed tool definitions for a category |
-| `execute_tool` | Execute any tool by name with parameters |
-| `search_tools` | Search for tools by keyword |
-
-This allows the AI to discover and use tools on-demand without loading all definitions upfront.
-
-### Quick Start
-
-1. **Launch Arduino IDE** - The MCP server starts automatically on `http://127.0.0.1:3847`.
-   The IDE console prints a ready-to-paste client configuration including your auth token.
-
-2. **Configure Claude Code** - Add to your MCP settings (`.mcp.json`):
    ```json
    {
      "mcpServers": {
        "arduino": {
          "type": "http",
          "url": "http://127.0.0.1:3847/mcp",
-         "headers": {
-           "Authorization": "Bearer <token from ~/.arduinoIDE/mcp-token>"
-         }
+         "headers": { "Authorization": "Bearer <your-token>" }
        }
      }
    }
    ```
-   (Clients that only support the legacy SSE transport can use `http://127.0.0.1:3847/sse`.)
 
-3. **Restart Claude Code** and start interacting:
-   - "Create a new sketch from the Blink example"
-   - "What boards are connected?"
-   - "Compile the current sketch and explain any errors"
-   - "Upload to the Arduino Uno on /dev/ttyUSB0"
+3. **Talk to your board.**
+   - *"Create a Blink sketch and open it."*
+   - *"What boards are connected?"*
+   - *"Compile for the Uno and explain any errors."*
+   - *"Upload it, then show me the serial output at 115200."*
 
-### IDE Settings
+## What the agent can do
 
-Access via **File > Preferences** and click the **MCP** tab:
+| Category | Operations |
+|----------|------------|
+| **Sketches** | Create, open, and edit sketches; read/write code; browse and clone built-in examples |
+| **Build** | Compile with live progress; capture real compiler output and structured errors |
+| **Upload** | Flash firmware to a connected board (guarded as a destructive action) |
+| **Boards** | Detect connected boards; query pin capabilities (PWM/I2C/SPI); install cores |
+| **Serial** | Connect, read, and write the serial monitor — shared with the IDE's own monitor |
+| **Libraries** | Search the registry; install/remove; browse library examples |
+| **Formatting** | Format Arduino/C++ with clang-format |
+| **Config** | Sketchbook location, board-manager URLs, IDE settings |
 
-| Setting | Description | Default |
-|---------|-------------|---------|
-| Enable MCP server | Enable/disable MCP server integration | `true` |
-| Start automatically | Auto-start MCP server on IDE launch | `true` |
-| Server port | HTTP port for MCP server (1024-65535) | `3847` |
-| Require auth | Require the bearer token for connections | `true` |
-| Log level | Logging verbosity (none/error/info/debug) | `info` |
-| Tool mode | Router (4 meta-tools) or Direct (all tools) | `router` |
+By default the tools are exposed through a **router pattern** — 4 meta-tools
+(`list_tool_categories`, `get_category_tools`, `execute_tool`, `search_tools`)
+so the agent discovers tools on demand instead of loading every definition into
+its context. A **direct mode** exposes all tools individually if you prefer.
 
-The MCP tab also displays the connection URL for easy copy/paste into Claude Code.
+## How it works
 
-### Verify Connection
+```
++------------------+     HTTP (Bearer auth)     +---------------------------+
+|    AI agent      | <------------------------> |      Arduino Agent        |
+|  (MCP client)    |   http://127.0.0.1:3847    |  (Theia/Electron + MCP)    |
++------------------+           /mcp             +------------------------------+
+                                                      |
+                                             Arduino toolchain
+                                        (arduino-cli daemon, clang-format,
+                                         pluggable serial monitor)
+```
+
+The MCP server is embedded in the IDE's backend and speaks the modern
+**Streamable HTTP** transport (plus legacy SSE for older clients), supporting
+multiple simultaneous sessions.
+
+**Security is on by default:**
+- Binds to `127.0.0.1` only.
+- Requires a bearer token (generated on first launch, stored in
+  `~/.arduinoIDE/mcp-token`).
+- Rejects browser-originated requests and sends no CORS headers, so a web page
+  can't reach it.
+- Confines file access to your sketchbook and the built-in examples.
+
+The only unauthenticated endpoint is a health check:
 
 ```bash
 curl http://127.0.0.1:3847/health
 ```
 
-Returns server status (the only endpoint that does not require the auth token).
+## Settings
 
-### STEM Education Features
+**File → Preferences → MCP:**
 
-The extension includes enhancements for educational use:
+| Setting | Description | Default |
+|---------|-------------|---------|
+| Enable MCP server | Turn the integration on/off | `true` |
+| Start automatically | Launch the server with the IDE | `true` |
+| Server port | HTTP port (1024–65535) | `3847` |
+| Require auth | Require the bearer token | `true` |
+| Log level | none / error / info / debug | `info` |
+| Tool mode | Router (4 meta-tools) or Direct (all tools) | `router` |
 
-- **Built-in Example Browser**: Access all Arduino examples with descriptions
-- **Hardware Reference Data**: Query board specs, pin capabilities, PWM/I2C/SPI pins
-- **Beginner-Friendly Errors**: Get compilation errors with explanations and fix suggestions
+## Made for learning, too
 
-### Documentation
+Arduino Agent ships extras aimed at STEM and classroom use:
 
-See [arduino-mcp-extension/README.md](arduino-mcp-extension/README.md) for complete documentation including:
-- Full tool reference with all actions and parameters
-- Example interactions and use cases
-- Tool safety annotations
-- Troubleshooting guide
+- **Example browser** — every built-in Arduino example, with descriptions.
+- **Hardware reference** — ask for a board's pin map, PWM/I2C/SPI pins, memory.
+- **Beginner-friendly errors** — compiler errors returned with plain-language
+  explanations and suggested fixes.
 
----
+It also carries a modernized UI (refined buttons, dialogs, board selector,
+progress bars, and serial monitor) that respects both light and dark themes.
 
-## UI/UX Modernization
+## Building from source
 
-This fork includes visual enhancements that give the IDE a more polished, professional appearance while maintaining full compatibility with the Arduino brand identity.
-
-### Design System
-
-A comprehensive CSS variable system provides consistent styling:
-
-- **Spacing**: Standardized spacing scale (4px, 8px, 12px, 16px, 24px)
-- **Border Radius**: Consistent rounding (4px, 6px, 8px, 14px pill)
-- **Shadows**: Subtle depth with light/dark theme variants
-- **Transitions**: Smooth 150-200ms animations
-
-### Visual Improvements
-
-| Component | Enhancements |
-|-----------|--------------|
-| **Buttons** | Subtle shadows, hover lift effect, modern 6px radius |
-| **Toolbar** | Scale animations on hover, polished button states |
-| **Dialogs** | Entry animation (fade + scale), visual separators |
-| **Board Selector** | Rounded dropdown, accent border on hover/selection |
-| **Progress Bars** | Gradient fill with shimmer animation |
-| **Input Fields** | Focus ring with teal brand glow |
-| **List Items** | Hover backgrounds, title accent on hover |
-| **Serial Monitor** | Styled scrollbar, input focus states |
-| **Status Bar** | Board/port badges with teal background |
-
-All styling respects both light and dark themes automatically.
-
----
-
-## Arduino IDE 2.x
-
-This repository contains the source code of the Arduino IDE 2.x. If you're looking for the old IDE, go to the [repository of the 1.x version](https://github.com/arduino/Arduino).
-
-The Arduino IDE 2.x is a major rewrite, sharing no code with the IDE 1.x. It is based on the [Theia IDE](https://theia-ide.org/) framework and built with [Electron](https://www.electronjs.org/). The backend operations such as compilation and uploading are offloaded to an [arduino-cli](https://github.com/arduino/arduino-cli) instance running in daemon mode. This new IDE was developed with the goal of preserving the same interface and user experience of the previous major version in order to provide a frictionless upgrade.
-
-![](static/screenshot.png)
-
-## Download
-
-You can download the latest release version and nightly builds from the [software download page on the Arduino website](https://www.arduino.cc/en/software).
-
-## Building from Source
-
-### Prerequisites
-
-- Node.js 18 or later
-- Yarn 4.x
-- Git
-
-### Build Steps
+**Prerequisites:** Node.js 18+, Yarn 4 (via Corepack), Python 3.11, Go 1.21, and
+a C/C++ toolchain (VS 2022 Build Tools on Windows).
 
 ```bash
-# Clone the repository
 git clone https://github.com/mixelpixx/arduino-mcp.git
 cd arduino-mcp
 
-# Install dependencies (Yarn 4 via corepack)
 corepack enable
 yarn install
+yarn prepare:shims      # create the launcher shims Theia's build expects
 
-# Create the launcher shims Theia's build expects
-yarn prepare:shims
-
-# Build all packages including MCP extension
-yarn build:dev
-
-# Start the IDE
-cd electron-app
-yarn start
+yarn build:dev          # build all packages, including the MCP extension
+cd electron-app && yarn start
 ```
 
-**Building on Windows?** See [docs/BUILDING-WINDOWS.md](docs/BUILDING-WINDOWS.md)
-for prerequisites (Python/setuptools, VS Build Tools) and the native-module
-workarounds, most of which are now applied automatically.
+Windows has a few extra native-module notes (mostly automated now) — see
+[**docs/BUILDING-WINDOWS.md**](docs/BUILDING-WINDOWS.md). Full extension
+documentation lives in
+[**arduino-mcp-extension/README.md**](arduino-mcp-extension/README.md).
 
-The MCP server will be available at `http://127.0.0.1:3847` when the IDE launches.
+## Project status
 
-## Support
+Actively developed. Verified working end-to-end: the MCP server and auth,
+IDE-state sync, sketch create/read/write with live editor reload, compile with
+real captured output, and all read-only tools. Upload and live serial are
+implemented and need a physical board to fully exercise. The Windows build is
+verified from source and installed; the macOS and Linux release builds are newer
+and still being hardened.
 
-If you need assistance, see the [Help Center](https://support.arduino.cc/hc/en-us/categories/360002212660-Software-and-Downloads) and browse the [forum](https://forum.arduino.cc/index.php?board=150.0).
+Contributions and bug reports are welcome via
+[Issues](https://github.com/mixelpixx/arduino-mcp/issues) and pull requests.
 
-## Bugs and Issues
+## Relationship to the Arduino IDE
 
-If you want to report an issue, you can submit it to the [issue tracker](https://github.com/mixelpixx/arduino-mcp/issues) of this repository.
+Arduino Agent is a fork of the open-source
+**[Arduino IDE 2.x](https://github.com/arduino/arduino-ide)** (a
+[Theia](https://theia-ide.org/)/[Electron](https://www.electronjs.org/)
+application that drives the [arduino-cli](https://github.com/arduino/arduino-cli)).
+All of the core IDE work is theirs; this project adds the embedded MCP server,
+the AI-collaboration features, and the UI refinements on top.
 
-### Security
-
-If you think you found a vulnerability or other security-related bug in this project, please read our [security policy](https://github.com/arduino/arduino-ide/security/policy) and report the bug to the Security Team.
-
-e-mail contact: security@arduino.cc
-
-## Contributions
-
-Contributions are welcome. See the [contributor guide](docs/CONTRIBUTING.md) and [development guide](docs/development.md) for more information.
+**Arduino® is a trademark of Arduino SA.** Arduino Agent is an independent,
+community project and is **not affiliated with, sponsored by, or endorsed by
+Arduino SA.** The name describes this project's purpose — an agent-driven Arduino
+development environment — and implies no official connection.
 
 ## License
 
-The code contained in this repository and the executable distributions are licensed under the terms of the GNU AGPLv3. The executable distributions contain third-party code licensed under other compatible licenses such as GPLv2, MIT and BSD-3. If you have questions about licensing please contact us at [license@arduino.cc](mailto:license@arduino.cc).
+Licensed under the **GNU AGPL-3.0-or-later**, the same license as the upstream
+Arduino IDE. Distributions include third-party components under compatible
+licenses (GPLv2, MIT, BSD-3). See [LICENSE.txt](LICENSE.txt).
