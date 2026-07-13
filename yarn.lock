@@ -14292,6 +14292,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"node-pty@patch:node-pty@npm%3A0.11.0-beta24#~/.yarn/patches/node-pty-npm-0.11.0-beta24-bb53864dbd.patch":
+  version: 0.11.0-beta24
+  resolution: "node-pty@patch:node-pty@npm%3A0.11.0-beta24#~/.yarn/patches/node-pty-npm-0.11.0-beta24-bb53864dbd.patch::version=0.11.0-beta24&hash=43df15"
+  dependencies:
+    nan: "npm:^2.17.0"
+    node-gyp: "npm:latest"
+  checksum: 10c0/d1b8ceb5d001277dacfa2f018178cc88e19e6ad16a0d672380afbdb9cf74ff27e25a7839b0dfe4943e94841a2fc4ec7538ae0522fd9b87c6a0bb57d09ef7f6cc
+  languageName: node
+  linkType: hard
+
 "node-releases@npm:^2.0.19":
   version: 2.0.19
   resolution: "node-releases@npm:2.0.19"

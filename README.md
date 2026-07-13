@@ -192,6 +192,9 @@ cd arduino-mcp
 corepack enable
 yarn install
 
+# Windows only: create the launcher shims Theia's build expects
+yarn prepare:win
+
 # Build all packages including MCP extension
 yarn build:dev
 
@@ -199,6 +202,10 @@ yarn build:dev
 cd electron-app
 yarn start
 ```
+
+**Building on Windows?** See [docs/BUILDING-WINDOWS.md](docs/BUILDING-WINDOWS.md)
+for prerequisites (Python/setuptools, VS Build Tools) and the native-module
+workarounds, most of which are now applied automatically.
 
 The MCP server will be available at `http://127.0.0.1:3847` when the IDE launches.
 

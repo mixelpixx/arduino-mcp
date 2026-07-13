@@ -1,0 +1,38 @@
+diff --git a/binding.gyp b/binding.gyp
+index 66411ec3f7caa6880ad0f6284682fce5b0067416..1a51b64f58e5b9364f95aeb25143e212a61c7ae1 100644
+--- a/binding.gyp
++++ b/binding.gyp
+@@ -6,7 +6,8 @@
+             'VCCLCompilerTool': {
+               'AdditionalOptions': [
+                 '/Qspectre',
+-                '/guard:cf'
++                '/guard:cf',
++                '/permissive'
+               ]
+             },
+             'VCLinkerTool': {
+diff --git a/src/win/conpty.cc b/src/win/conpty.cc
+index 25793a5e1c97aa63b59117eeb1aea6bc3a9ca3bf..58000c01c42e91e413ae86d6b762908007e46cb1 100644
+--- a/src/win/conpty.cc
++++ b/src/win/conpty.cc
+@@ -32,12 +32,17 @@ extern "C" void init(v8::Local<v8::Object>);
+   ProcThreadAttributeValue(22, FALSE, TRUE, FALSE)
+ 
+ typedef VOID* HPCON;
++
++#endif
++
++// These typedefs must exist regardless of the SDK version. Newer Windows SDKs
++// (>= 10.0.26100) define PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE, which previously
++// skipped these declarations and broke the build with "PFNCREATEPSEUDOCONSOLE
++// undeclared identifier". Fixed upstream in later node-pty releases.
+ typedef HRESULT (__stdcall *PFNCREATEPSEUDOCONSOLE)(COORD c, HANDLE hIn, HANDLE hOut, DWORD dwFlags, HPCON* phpcon);
+ typedef HRESULT (__stdcall *PFNRESIZEPSEUDOCONSOLE)(HPCON hpc, COORD newSize);
+ typedef void (__stdcall *PFNCLOSEPSEUDOCONSOLE)(HPCON hpc);
+ 
+-#endif
+-
+ struct pty_baton {
+   int id;
+   HANDLE hIn;
