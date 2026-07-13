@@ -192,8 +192,8 @@ cd arduino-mcp
 corepack enable
 yarn install
 
-# Windows only: create the launcher shims Theia's build expects
-yarn prepare:win
+# Create the launcher shims Theia's build expects
+yarn prepare:shims
 
 # Build all packages including MCP extension
 yarn build:dev

@@ -2,29 +2,25 @@
 'use strict';
 
 /**
- * Prepare a Windows build environment.
+ * Prepare build launcher shims (all platforms).
  *
  * Theia's application-manager spawns `webpack` (and `electron`) from specific
  * per-package `node_modules/.bin` directories rather than from PATH. Under
  * Yarn 4's node-modules linker those binaries are hoisted to the repository
- * root, so the nested `.bin/*.cmd` launchers Theia expects do not exist and the
- * build fails with "The system cannot find the path specified."
+ * root, so the nested launchers Theia expects do not exist and the build fails
+ * with "webpack: not found" (POSIX) or "The system cannot find the path
+ * specified" (Windows).
  *
- * This script creates the missing `.cmd` shims that point at the hoisted
- * binaries. It is idempotent and a no-op on non-Windows platforms, so it is safe
- * to run unconditionally (e.g. from a `prepare` script or by hand after
- * `yarn install`).
+ * This script creates the missing launcher shims pointing at the hoisted
+ * binaries: `.cmd` shims on Windows, executable shell shims on Linux/macOS. It
+ * is idempotent, so it is safe to run before every build.
  */
 
 const fs = require('fs');
 const path = require('path');
 
 const repoRoot = path.resolve(__dirname, '..');
-
-if (process.platform !== 'win32') {
-  console.log('[prepare-windows-build] Not Windows - nothing to do.');
-  process.exit(0);
-}
+const isWindows = process.platform === 'win32';
 
 /**
  * @param {string} request
@@ -63,18 +59,30 @@ for (const dir of binDirs) {
       continue;
     }
     fs.mkdirSync(dir, { recursive: true });
-    const shim = path.join(dir, `${name}.cmd`);
-    if (fs.existsSync(shim)) {
-      continue;
+
+    if (isWindows) {
+      const shim = path.join(dir, `${name}.cmd`);
+      if (fs.existsSync(shim)) {
+        continue;
+      }
+      fs.writeFileSync(shim, `@ECHO off\r\nnode "${target}" %*\r\n`);
+      created++;
+      console.log(`[prepare-build-shims] created ${shim}`);
+    } else {
+      const shim = path.join(dir, name);
+      if (fs.existsSync(shim)) {
+        continue;
+      }
+      fs.writeFileSync(shim, `#!/bin/sh\nexec node "${target}" "$@"\n`);
+      fs.chmodSync(shim, 0o755);
+      created++;
+      console.log(`[prepare-build-shims] created ${shim}`);
     }
-    fs.writeFileSync(shim, `@ECHO off\r\nnode "${target}" %*\r\n`);
-    console.log(`[prepare-windows-build] created ${shim}`);
-    created++;
   }
 }
 
 console.log(
   created > 0
-    ? `[prepare-windows-build] Done - created ${created} launcher shim(s).`
-    : '[prepare-windows-build] Done - all launcher shims already present.'
+    ? `[prepare-build-shims] Done - created ${created} launcher shim(s).`
+    : '[prepare-build-shims] Done - all launcher shims already present.'
 );
