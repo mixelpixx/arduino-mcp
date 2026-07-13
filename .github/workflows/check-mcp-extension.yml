@@ -39,13 +39,20 @@ jobs:
       - name: Install dependencies (skip native builds)
         run: yarn install --mode=skip-build
 
+      # Note: build steps use `npm run` instead of `yarn run`. Yarn 4 only
+      # exposes binaries declared by the workspace itself, and
+      # arduino-ide-extension gets `tsc` from the repo root - with yarn the
+      # build silently falls back to whatever global tsc is on the runner.
       - name: Prepare arduino-ide-extension resources
         run: |
           mkdir -p arduino-ide-extension/src/node/resources
-          yarn --cwd arduino-ide-extension copy-i18n
+          npm run copy-i18n --prefix arduino-ide-extension
+
+      - name: Show TypeScript version
+        run: node node_modules/typescript/bin/tsc --version
 
       - name: Build arduino-ide-extension
-        run: yarn --cwd arduino-ide-extension build
+        run: npm run build --prefix arduino-ide-extension
 
       - name: Build arduino-mcp-extension
-        run: yarn --cwd arduino-mcp-extension build
+        run: npm run build --prefix arduino-mcp-extension
