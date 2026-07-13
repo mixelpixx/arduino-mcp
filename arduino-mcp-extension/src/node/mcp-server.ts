@@ -721,6 +721,7 @@ export class ArduinoMCPServer {
     } catch {
       // resolution can fail in unusual packagings; fall back to relative lookup
     }
+    // Dev layout: this file at arduino-mcp-extension/lib/node, examples in the sibling package.
     candidates.push(
       path.join(
         __dirname,
@@ -733,6 +734,12 @@ export class ArduinoMCPServer {
         'resources',
         'Examples'
       )
+    );
+    // Bundled (production) layout: everything is webpacked into lib/backend, and the
+    // IDE resources are copied to lib/backend/resources. There __dirname is lib/backend.
+    candidates.push(
+      path.join(__dirname, 'resources', 'Examples'),
+      path.join(__dirname, '..', 'backend', 'resources', 'Examples')
     );
     for (const candidate of candidates) {
       try {

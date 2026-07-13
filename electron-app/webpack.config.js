@@ -62,6 +62,32 @@ backend.config.plugins.push(new NativeWebpackPlugin({
   },
 }));
 
+// The optional @vscode/windows-ca-certs native module only builds when the
+// Spectre-mitigated VS libraries are installed. Theia's generated config only
+// ignores it on non-Windows platforms; ignore it here too when the binary is
+// absent so Windows builds without those libraries still succeed.
+if (
+  !fs.existsSync(
+    path.join(
+      __dirname,
+      '..',
+      'node_modules',
+      '@vscode',
+      'windows-ca-certs',
+      'build',
+      'Release',
+      'crypt32.node'
+    )
+  )
+) {
+  backend.config.plugins.push(
+    new webpack.IgnorePlugin({
+      checkResource: (resource) =>
+        resource.startsWith('@vscode/windows-ca-certs'),
+    })
+  );
+}
+
 // Use a customized backend main that can enable the file logger in bundled mode.
 backend.config.entry['main'] = require.resolve('./arduino-ide-backend-main.js');
 
