@@ -322,7 +322,7 @@ jobs:
 
       - name: Install Node.js
         if: runner.name != 'WINDOWS-SIGN-PC'
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
           registry-url: 'https://registry.npmjs.org'
@@ -405,7 +405,7 @@ jobs:
           echo "STAGED_CHANNEL_FILES_PATH=$staged_channel_files_path" >> "$GITHUB_ENV"
 
       - name: Upload staged-for-merge channel file artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         if: >
           needs.select-targets.outputs.merge-channel-files == 'true' &&
           matrix.config.mergeable-channel-file == 'true'
@@ -415,7 +415,7 @@ jobs:
           path: ${{ matrix.config.working-directory && format('{0}/{1}', matrix.config.working-directory, env.STAGED_CHANNEL_FILES_PATH) || env.STAGED_CHANNEL_FILES_PATH }}
 
       - name: Upload builds to job transfer artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ env.JOB_TRANSFER_ARTIFACT_PREFIX }}${{ matrix.config.job-transfer-artifact-suffix }}
           path: ${{ matrix.config.working-directory && format('{0}/{1}', matrix.config.working-directory, env.BUILD_ARTIFACTS_PATH) || env.BUILD_ARTIFACTS_PATH }}
@@ -456,7 +456,7 @@ jobs:
           name: ${{ env.STAGED_CHANNEL_FILE_ARTIFACT_PREFIX }}*
 
       - name: Install Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: ${{ env.NODE_VERSION }}
           registry-url: 'https://registry.npmjs.org'
@@ -490,7 +490,7 @@ jobs:
               --input "${{ env.CHANNEL_FILES_PATH }}"
 
       - name: Upload merged channel files job transfer artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           if-no-files-found: error
           name: ${{ env.JOB_TRANSFER_ARTIFACT_PREFIX }}channel-files
@@ -519,7 +519,7 @@ jobs:
           path: ${{ env.BUILD_ARTIFACTS_FOLDER }}
 
       - name: Upload tester build artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ matrix.artifact.name }}
           path: ${{ env.BUILD_ARTIFACTS_FOLDER }}/${{ matrix.artifact.path }}
@@ -567,7 +567,7 @@ jobs:
 
       - name: Upload changelog job transfer artifact
         if: needs.build-type-determination.outputs.is-nightly == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: ${{ env.JOB_TRANSFER_ARTIFACT_PREFIX }}changelog
           path: CHANGELOG.txt
