@@ -3,7 +3,9 @@
  *
  * Defines the interface between frontend and backend for MCP control.
  * This enables the preferences UI to control the MCP server.
- * Also provides real-time notifications for file changes made via MCP.
+ * Also provides real-time notifications for file changes made via MCP,
+ * and lets the frontend push the IDE's actual state (current sketch,
+ * selected board/port) to the MCP server.
  */
 
 export const MCPServicePath = '/services/mcp-service';
@@ -18,6 +20,7 @@ export interface MCPStatus {
   port: number;
   connectedClients: number;
   uptime: number; // seconds
+  authRequired: boolean;
 }
 
 /**
@@ -29,6 +32,20 @@ export interface MCPFileChangeEvent {
   source: 'mcp'; // Always 'mcp' for changes via MCP tools
   tool: string;  // The tool that made the change (e.g., 'arduino_sketch')
   timestamp: number;
+}
+
+/**
+ * A snapshot of the IDE state that is relevant to MCP clients.
+ * Pushed from the frontend whenever the current sketch or the
+ * board/port selection changes.
+ */
+export interface MCPIDEState {
+  sketchUri?: string;
+  sketchName?: string;
+  boardFqbn?: string;
+  boardName?: string;
+  portAddress?: string;
+  portProtocol?: string;
 }
 
 /**
@@ -72,9 +89,20 @@ export interface MCPService {
   restart(): Promise<void>;
 
   /**
+   * Restart the MCP server on a different port
+   */
+  setPort(port: number): Promise<void>;
+
+  /**
    * Get the server URL for client configuration
    */
   getServerUrl(): Promise<string>;
+
+  /**
+   * Get a ready-to-paste MCP client configuration snippet
+   * (includes the auth token when authentication is enabled).
+   */
+  getClientConfig(): Promise<string>;
 
   /**
    * Check if MCP server is healthy and accepting connections
@@ -85,6 +113,12 @@ export interface MCPService {
    * Set the tool exposure mode (router or direct)
    */
   setToolMode(mode: ToolMode): Promise<void>;
+
+  /**
+   * Push the IDE's actual state (current sketch, board/port selection)
+   * to the MCP server. Called by the frontend on every change.
+   */
+  updateIDEState(state: MCPIDEState): Promise<void>;
 
   /**
    * Set the client to receive notifications (called by frontend)

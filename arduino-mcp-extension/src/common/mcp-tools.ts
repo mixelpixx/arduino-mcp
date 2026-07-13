@@ -1,25 +1,27 @@
 /**
  * MCP Tool Definitions for Arduino IDE
  *
- * 2025 MCP Spec Compliance:
- * - Tool Annotations for safety hints (destructiveHint, readOnlyHint, etc.)
- * - Task-enabled tools for async operations
- * - Grouped tools with action parameters to minimize tool count
+ * - Spec-compliant tool annotations (readOnlyHint, destructiveHint,
+ *   idempotentHint, openWorldHint) that are sent to clients in tools/list.
+ * - Task-enabled tools for async operations (compile/upload).
+ * - Grouped tools with action parameters to minimize tool count.
  */
 
 /**
- * Tool Annotations (2025 Spec)
- * These hints help Claude Code show appropriate warnings to users
+ * Tool annotations as defined by the MCP specification.
+ * https://modelcontextprotocol.io/docs/concepts/tools#tool-annotations
  */
 export interface ToolAnnotations {
+  /** Human-readable title for the tool */
+  title?: string;
   /** Tool only reads data, doesn't modify anything */
   readOnlyHint?: boolean;
-  /** Tool makes destructive/irreversible changes */
+  /** Tool may make destructive/irreversible changes */
   destructiveHint?: boolean;
-  /** Tool has side effects outside the IDE */
-  sideEffectHint?: boolean;
-  /** Requires explicit user confirmation before execution */
-  confirmationRequired?: boolean;
+  /** Repeated calls with the same arguments have no additional effect */
+  idempotentHint?: boolean;
+  /** Tool interacts with the outside world (network, hardware, ...) */
+  openWorldHint?: boolean;
 }
 
 export interface ToolDefinition {
@@ -33,8 +35,13 @@ export interface ToolDefinition {
   annotations?: ToolAnnotations;
 }
 
+export const SERIAL_BAUD_RATES = [
+  300, 600, 750, 1200, 2400, 4800, 9600, 19200, 31250, 38400, 57600, 74880,
+  115200, 230400, 250000, 460800, 500000, 921600, 1000000, 2000000,
+];
+
 // ============================================================
-// TOOL DEFINITIONS WITH 2025 ANNOTATIONS
+// TOOL DEFINITIONS
 // ============================================================
 
 export const ARDUINO_TOOLS: ToolDefinition[] = [
@@ -44,7 +51,7 @@ export const ARDUINO_TOOLS: ToolDefinition[] = [
   {
     name: 'arduino_sketch',
     description:
-      'Manage Arduino sketches - create, open, save, and edit sketch files. Use get_content to read code, set_content to write code. Use list_examples to find built-in examples, from_example to create a sketch from an example.',
+      'Manage Arduino sketches - create, open, and edit sketch files. Use get_content to read code, set_content to write code (changes are written to disk immediately and shown in the IDE). Use list_examples to find built-in examples, from_example to create a sketch from an example. File access is restricted to the sketchbook, built-in examples, and temporary sketches.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -53,7 +60,6 @@ export const ARDUINO_TOOLS: ToolDefinition[] = [
           enum: [
             'create',
             'open',
-            'save',
             'list',
             'get_content',
             'set_content',
@@ -67,11 +73,12 @@ export const ARDUINO_TOOLS: ToolDefinition[] = [
         path: {
           type: 'string',
           description:
-            'Path to sketch file or directory (for open, save, get_content, set_content)',
+            'Path or file:// URI of a sketch folder or file (for open, get_content, set_content)',
         },
         name: {
           type: 'string',
-          description: 'Name for new sketch (for create action)',
+          description:
+            'Name for the new sketch (for create). Letters, digits, "_" and "-" only. Created in the sketchbook. Omit to create a temporary sketch.',
         },
         content: {
           type: 'string',
@@ -79,19 +86,21 @@ export const ARDUINO_TOOLS: ToolDefinition[] = [
         },
         example_path: {
           type: 'string',
-          description: 'Path to example (for from_example). Use list_examples to find available examples.',
+          description:
+            'Path to example (for from_example). Use list_examples to find available examples.',
         },
         category: {
           type: 'string',
-          description: 'Filter examples by category: "01.Basics", "02.Digital", "03.Analog", etc. (for list_examples)',
+          description:
+            'Filter examples by category: "01.Basics", "02.Digital", "03.Analog", etc. (for list_examples)',
         },
       },
       required: ['action'],
     },
     annotations: {
+      title: 'Arduino sketches',
       readOnlyHint: false,
       destructiveHint: false,
-      sideEffectHint: false,
     },
   },
 
@@ -101,18 +110,19 @@ export const ARDUINO_TOOLS: ToolDefinition[] = [
   {
     name: 'arduino_compile',
     description:
-      'Compile the current sketch. Returns immediately with a task ID. Use arduino_task_status to check progress and get results.',
+      'Compile a sketch. Returns immediately with a task ID; use arduino_task_status to check progress and get results, and arduino_build_output for the compiler output. Compiles the sketch open in the IDE unless sketch_path is given; uses the board selected in the IDE unless fqbn is given.',
     inputSchema: {
       type: 'object',
       properties: {
         sketch_path: {
           type: 'string',
-          description: 'Path to sketch (defaults to current sketch)',
+          description:
+            'Path or file:// URI of the sketch to compile (defaults to the sketch currently open)',
         },
         fqbn: {
           type: 'string',
           description:
-            'Fully Qualified Board Name (e.g., arduino:avr:uno). Uses selected board if not specified.',
+            'Fully Qualified Board Name (e.g., arduino:avr:uno). Defaults to the board selected in the IDE.',
         },
         verbose: {
           type: 'boolean',
@@ -121,31 +131,34 @@ export const ARDUINO_TOOLS: ToolDefinition[] = [
       },
     },
     annotations: {
-      readOnlyHint: true, // Doesn't modify hardware or files
+      title: 'Compile sketch',
+      readOnlyHint: false, // writes build artifacts
       destructiveHint: false,
-      sideEffectHint: false,
+      idempotentHint: true,
     },
   },
 
   {
     name: 'arduino_upload',
     description:
-      '[CAUTION] Upload compiled sketch to Arduino board. This OVERWRITES firmware on the device. Returns task ID for progress tracking.',
+      '[CAUTION] Compile and upload a sketch to an Arduino board. This OVERWRITES the firmware on the device. Returns a task ID for progress tracking via arduino_task_status.',
     inputSchema: {
       type: 'object',
       properties: {
         sketch_path: {
           type: 'string',
-          description: 'Path to sketch (defaults to current sketch)',
+          description:
+            'Path or file:// URI of the sketch (defaults to the sketch currently open)',
         },
         fqbn: {
           type: 'string',
-          description: 'Fully Qualified Board Name. Uses selected board if not specified.',
+          description:
+            'Fully Qualified Board Name. Defaults to the board selected in the IDE.',
         },
         port: {
           type: 'string',
           description:
-            'Serial port (e.g., /dev/ttyUSB0, COM3). Will prompt if multiple detected.',
+            'Serial port (e.g., /dev/ttyUSB0, COM3). Defaults to the port selected in the IDE.',
         },
         verify: {
           type: 'boolean',
@@ -154,17 +167,17 @@ export const ARDUINO_TOOLS: ToolDefinition[] = [
       },
     },
     annotations: {
+      title: 'Upload to board',
       readOnlyHint: false,
-      destructiveHint: true, // CAUTION: Overwrites firmware
-      sideEffectHint: true, // Modifies external hardware
-      confirmationRequired: true, // Force user approval
+      destructiveHint: true, // overwrites firmware
+      openWorldHint: true, // talks to external hardware
     },
   },
 
   {
     name: 'arduino_build_output',
     description:
-      'Get compilation/upload output, errors, and warnings. Use format=explained for beginner-friendly error descriptions with fix suggestions.',
+      'Get the output of the most recent compile/upload, including errors and warnings. Use format=explained for beginner-friendly error descriptions with fix suggestions.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -176,13 +189,14 @@ export const ARDUINO_TOOLS: ToolDefinition[] = [
         format: {
           type: 'string',
           enum: ['raw', 'explained'],
-          description: 'Output format. "explained" adds beginner-friendly descriptions and fix suggestions (default: raw)',
+          description:
+            'Output format. "explained" adds beginner-friendly descriptions and fix suggestions (default: raw)',
         },
       },
     },
     annotations: {
+      title: 'Build output',
       readOnlyHint: true,
-      destructiveHint: false,
     },
   },
 
@@ -192,7 +206,7 @@ export const ARDUINO_TOOLS: ToolDefinition[] = [
   {
     name: 'arduino_board',
     description:
-      'Manage Arduino boards - list connected devices, select board/port, get board details including pin capabilities. Use get_info for detailed specs like PWM pins, analog pins, memory size.',
+      'Manage Arduino boards - list connected devices, get the IDE board selection, choose a default board/port for this MCP session, get board details including pin capabilities, search boards, install cores.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -207,15 +221,17 @@ export const ARDUINO_TOOLS: ToolDefinition[] = [
             'search',
             'install_core',
           ],
-          description: 'The board operation to perform',
+          description:
+            'The board operation to perform. "select" sets the default board/port used by compile/upload for this MCP session (it does not change the IDE UI selection). "get_selected" returns the IDE selection and the MCP session override.',
         },
         fqbn: {
           type: 'string',
-          description: 'Fully Qualified Board Name (for select, get_info). Example: arduino:avr:uno',
+          description:
+            'Fully Qualified Board Name (for select, get_info). Example: arduino:avr:uno',
         },
         port: {
           type: 'string',
-          description: 'Serial port to associate with board',
+          description: 'Serial port to associate with the board (for select)',
         },
         query: {
           type: 'string',
@@ -229,8 +245,9 @@ export const ARDUINO_TOOLS: ToolDefinition[] = [
       required: ['action'],
     },
     annotations: {
-      readOnlyHint: false, // install_core modifies system
-      destructiveHint: false,
+      title: 'Arduino boards',
+      readOnlyHint: false, // install_core modifies the system
+      openWorldHint: true, // install_core downloads from the internet
     },
   },
 
@@ -240,7 +257,7 @@ export const ARDUINO_TOOLS: ToolDefinition[] = [
   {
     name: 'arduino_serial',
     description:
-      'Serial monitor operations - connect to board, read output, send data, configure baud rate.',
+      'Serial monitor operations - connect to a board, read its output, send data, change the baud rate. The connection is shared with the IDE serial monitor.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -265,7 +282,12 @@ export const ARDUINO_TOOLS: ToolDefinition[] = [
         baud_rate: {
           type: 'number',
           description: 'Baud rate (default: 9600)',
-          enum: [300, 1200, 2400, 4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600],
+          enum: SERIAL_BAUD_RATES,
+        },
+        fqbn: {
+          type: 'string',
+          description:
+            'Board FQBN for the monitor (for connect; only needed when the board on the port cannot be auto-detected)',
         },
         data: {
           type: 'string',
@@ -276,10 +298,6 @@ export const ARDUINO_TOOLS: ToolDefinition[] = [
           enum: ['none', 'newline', 'carriage', 'both'],
           description: 'Line ending for write operations (default: newline)',
         },
-        timeout_ms: {
-          type: 'number',
-          description: 'Read timeout in milliseconds (default: 1000)',
-        },
         max_lines: {
           type: 'number',
           description: 'Maximum lines to return for read (default: 100)',
@@ -288,8 +306,9 @@ export const ARDUINO_TOOLS: ToolDefinition[] = [
       required: ['action'],
     },
     annotations: {
+      title: 'Serial monitor',
       readOnlyHint: false, // write sends data to device
-      sideEffectHint: true, // Communicates with external hardware
+      openWorldHint: true, // communicates with external hardware
     },
   },
 
@@ -299,7 +318,7 @@ export const ARDUINO_TOOLS: ToolDefinition[] = [
   {
     name: 'arduino_library',
     description:
-      'Manage Arduino libraries - search the library registry, install/remove libraries, list installed, get examples.',
+      'Manage Arduino libraries - search the library registry, install/remove libraries, list installed libraries, get library details and examples.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -324,9 +343,9 @@ export const ARDUINO_TOOLS: ToolDefinition[] = [
       required: ['action'],
     },
     annotations: {
+      title: 'Arduino libraries',
       readOnlyHint: false,
-      sideEffectHint: true, // Downloads from internet
-      confirmationRequired: true, // For install action
+      openWorldHint: true, // install downloads from the internet
     },
   },
 
@@ -336,23 +355,14 @@ export const ARDUINO_TOOLS: ToolDefinition[] = [
   {
     name: 'arduino_context',
     description:
-      'Get current IDE state including open sketch, selected board, connected devices, serial monitor status.',
+      'Get current IDE state including open sketch, selected board/port, connected devices, serial monitor status.',
     inputSchema: {
       type: 'object',
-      properties: {
-        include: {
-          type: 'array',
-          items: {
-            type: 'string',
-            enum: ['sketch', 'board', 'serial', 'libraries', 'all'],
-          },
-          description: 'What to include in context (default: all)',
-        },
-      },
+      properties: {},
     },
     annotations: {
+      title: 'IDE context',
       readOnlyHint: true,
-      destructiveHint: false,
     },
   },
 
@@ -362,7 +372,7 @@ export const ARDUINO_TOOLS: ToolDefinition[] = [
   {
     name: 'arduino_task_status',
     description:
-      'Check status of async operations (compile, upload). Returns pending/running/completed/failed status and result.',
+      'Check status of async operations (compile, upload). Returns pending/running/completed/failed status, progress, and result.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -374,6 +384,7 @@ export const ARDUINO_TOOLS: ToolDefinition[] = [
       required: ['task_id'],
     },
     annotations: {
+      title: 'Task status',
       readOnlyHint: true,
     },
   },
@@ -404,8 +415,9 @@ export const ARDUINO_TOOLS: ToolDefinition[] = [
       required: ['content'],
     },
     annotations: {
+      title: 'Format code',
       readOnlyHint: true,
-      destructiveHint: false,
+      idempotentHint: true,
     },
   },
 
@@ -441,8 +453,8 @@ export const ARDUINO_TOOLS: ToolDefinition[] = [
       required: ['action'],
     },
     annotations: {
+      title: 'IDE configuration',
       readOnlyHint: false,
-      sideEffectHint: true,
     },
   },
 ];
@@ -451,21 +463,21 @@ export const ARDUINO_TOOLS: ToolDefinition[] = [
 // TOOL SAFETY REFERENCE TABLE
 // ============================================================
 /**
- * Quick reference for tool safety levels:
+ * Quick reference for tool safety levels (also sent to clients as annotations):
  *
- * | Tool                 | Read-Only | Destructive | Side Effect | Confirmation |
- * |----------------------|-----------|-------------|-------------|--------------|
- * | arduino_sketch       | No        | No          | No          | No           |
- * | arduino_compile      | Yes       | No          | No          | No           |
- * | arduino_upload       | No        | YES*        | Yes         | Yes          |
- * | arduino_build_output | Yes       | No          | No          | No           |
- * | arduino_board        | No        | No          | No          | No           |
- * | arduino_serial       | No        | No          | Yes         | No           |
- * | arduino_library      | No        | No          | Yes         | Yes          |
- * | arduino_context      | Yes       | No          | No          | No           |
- * | arduino_task_status  | Yes       | No          | No          | No           |
- * | arduino_format       | Yes       | No          | No          | No           |
- * | arduino_config       | No        | No          | Yes         | No           |
+ * | Tool                 | Read-Only | Destructive | Open World | Idempotent |
+ * |----------------------|-----------|-------------|------------|------------|
+ * | arduino_sketch       | No        | No          | No         | No         |
+ * | arduino_compile      | No        | No          | No         | Yes        |
+ * | arduino_upload       | No        | YES*        | Yes        | No         |
+ * | arduino_build_output | Yes       | No          | No         | -          |
+ * | arduino_board        | No        | No          | Yes        | No         |
+ * | arduino_serial       | No        | No          | Yes        | No         |
+ * | arduino_library      | No        | No          | Yes        | No         |
+ * | arduino_context      | Yes       | No          | No         | -          |
+ * | arduino_task_status  | Yes       | No          | No         | -          |
+ * | arduino_format       | Yes       | No          | No         | Yes        |
+ * | arduino_config       | No        | No          | No         | No         |
  *
  * * arduino_upload overwrites device firmware - use caution
  */

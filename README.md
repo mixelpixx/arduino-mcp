@@ -13,16 +13,20 @@ This fork of Arduino IDE 2.x includes an embedded **Model Context Protocol (MCP)
 The MCP extension embeds a server directly into the Arduino IDE, providing AI assistants with complete access to the Arduino development workflow. No external processes, no complex setup - the IDE itself becomes the MCP server.
 
 ```
-+------------------+        HTTP/SSE         +------------------+
++------------------+     HTTP (Bearer auth)  +------------------+
 |   Claude Code    |<----------------------->|   Arduino IDE    |
 |   (MCP Client)   |   http://127.0.0.1:3847 |   (MCP Server)   |
-+------------------+                         +------------------+
++------------------+          /mcp           +------------------+
                                                       |
                                              Arduino Services
                                             (Sketches, Boards,
                                              Libraries, Serial,
                                              Compiler, Config)
 ```
+
+The server binds to localhost only, requires a bearer token by default (stored in
+`~/.arduinoIDE/mcp-token`), rejects browser-originated requests, and restricts file
+access to the sketchbook and built-in examples.
 
 ### Key Capabilities
 
@@ -60,18 +64,24 @@ This allows the AI to discover and use tools on-demand without loading all defin
 
 ### Quick Start
 
-1. **Launch Arduino IDE** - The MCP server starts automatically on `http://127.0.0.1:3847`
+1. **Launch Arduino IDE** - The MCP server starts automatically on `http://127.0.0.1:3847`.
+   The IDE console prints a ready-to-paste client configuration including your auth token.
 
-2. **Configure Claude Code** - Add to your MCP settings:
+2. **Configure Claude Code** - Add to your MCP settings (`.mcp.json`):
    ```json
    {
      "mcpServers": {
        "arduino": {
-         "url": "http://127.0.0.1:3847/sse"
+         "type": "http",
+         "url": "http://127.0.0.1:3847/mcp",
+         "headers": {
+           "Authorization": "Bearer <token from ~/.arduinoIDE/mcp-token>"
+         }
        }
      }
    }
    ```
+   (Clients that only support the legacy SSE transport can use `http://127.0.0.1:3847/sse`.)
 
 3. **Restart Claude Code** and start interacting:
    - "Create a new sketch from the Blink example"
@@ -88,6 +98,7 @@ Access via **File > Preferences** and click the **MCP** tab:
 | Enable MCP server | Enable/disable MCP server integration | `true` |
 | Start automatically | Auto-start MCP server on IDE launch | `true` |
 | Server port | HTTP port for MCP server (1024-65535) | `3847` |
+| Require auth | Require the bearer token for connections | `true` |
 | Log level | Logging verbosity (none/error/info/debug) | `info` |
 | Tool mode | Router (4 meta-tools) or Direct (all tools) | `router` |
 
@@ -99,7 +110,7 @@ The MCP tab also displays the connection URL for easy copy/paste into Claude Cod
 curl http://127.0.0.1:3847/health
 ```
 
-Returns server status including available services.
+Returns server status (the only endpoint that does not require the auth token).
 
 ### STEM Education Features
 
@@ -174,10 +185,11 @@ You can download the latest release version and nightly builds from the [softwar
 
 ```bash
 # Clone the repository
-git clone https://github.com/mixelpixx/arduino-ide.git
-cd arduino-ide
+git clone https://github.com/mixelpixx/arduino-mcp.git
+cd arduino-mcp
 
-# Install dependencies
+# Install dependencies (Yarn 4 via corepack)
+corepack enable
 yarn install
 
 # Build all packages including MCP extension
@@ -196,7 +208,7 @@ If you need assistance, see the [Help Center](https://support.arduino.cc/hc/en-u
 
 ## Bugs and Issues
 
-If you want to report an issue, you can submit it to the [issue tracker](https://github.com/mixelpixx/arduino-ide/issues) of this repository.
+If you want to report an issue, you can submit it to the [issue tracker](https://github.com/mixelpixx/arduino-mcp/issues) of this repository.
 
 ### Security
 

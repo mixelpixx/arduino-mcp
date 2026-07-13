@@ -6,6 +6,7 @@
   "author": "Arduino SA",
   "license": "AGPL-3.0-or-later",
   "private": true,
+  "packageManager": "yarn@4.5.3",
   "engines": {
     "node": ">=18.17.0 <21"
   },
