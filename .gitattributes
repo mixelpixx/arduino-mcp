@@ -1,0 +1,3 @@
+# Yarn patch files are line-ending sensitive; keep them LF so `yarn install`
+# can apply them on every platform.
+.yarn/patches/*.patch -text

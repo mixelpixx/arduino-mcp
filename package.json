@@ -12,7 +12,8 @@
   },
   "resolutions": {
     "@theia/cli/@babel/traverse": "^7.23.2",
-    "nx/axios": "^1.6.7"
+    "nx/axios": "^1.6.7",
+    "node-pty@npm:0.11.0-beta24": "patch:node-pty@npm%3A0.11.0-beta24#~/.yarn/patches/node-pty-npm-0.11.0-beta24-bb53864dbd.patch"
   },
   "devDependencies": {
     "@theia/cli": "1.57.0",
@@ -52,6 +53,7 @@
     "test": "lerna run test",
     "test:slow": "lerna run test:slow",
     "update:version": "node ./scripts/update-version.js",
+    "prepare:win": "node ./scripts/prepare-windows-build.js",
     "i18n:generate": "theia nls-extract -e vscode -f \"+(arduino-ide-extension|electron-app|plugins)/**/*.ts?(x)\" -o ./i18n/en.json",
     "i18n:check": "yarn i18n:generate && git add -N ./i18n && git diff --exit-code ./i18n",
     "i18n:push": "node ./scripts/i18n/transifex-push.js ./i18n/en.json",

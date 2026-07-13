@@ -157,6 +157,9 @@ cd arduino-mcp
 corepack enable
 yarn install
 
+# Windows only: create the launcher shims Theia's build expects
+yarn prepare:win
+
 # Build all packages
 yarn build:dev
 
@@ -164,6 +167,9 @@ yarn build:dev
 cd electron-app
 yarn start
 ```
+
+> On Windows, see [docs/BUILDING-WINDOWS.md](../docs/BUILDING-WINDOWS.md) for
+> prerequisites and native-module build notes.
 
 ### Configure Claude Code
 
