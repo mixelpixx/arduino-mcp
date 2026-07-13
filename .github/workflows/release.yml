@@ -83,9 +83,8 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
-      - name: Prepare Windows launcher shims
-        if: runner.os == 'Windows'
-        run: yarn prepare:win
+      - name: Prepare build launcher shims
+        run: yarn prepare:shims
 
       - name: Download Arduino resources (CLI, LS, firmware uploader, examples)
         run: yarn --cwd arduino-ide-extension prepare

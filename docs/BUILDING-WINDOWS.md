@@ -50,8 +50,8 @@ cd arduino-mcp
 corepack enable
 yarn install            # applies the bundled node-pty patch automatically
 
-# Windows only: create the launcher shims Theia's build expects (see below)
-yarn prepare:win
+# Create the launcher shims Theia's build expects (see below)
+yarn prepare:shims
 
 # Development build + run
 yarn build:dev
@@ -93,17 +93,19 @@ Both are fixed by a Yarn patch committed at
 referenced from the root `package.json` `resolutions`. `yarn install` applies it
 automatically — no manual editing.
 
-### 2. Launcher shims for the Theia build (`yarn prepare:win`)
+### 2. Launcher shims for the Theia build (`yarn prepare:shims`)
 
 Theia's `application-manager` spawns `webpack` and `electron` from specific
 per-package `node_modules/.bin` directories, not from `PATH`. Under Yarn 4's
 node-modules linker those binaries are hoisted to the repo root, so the nested
-launchers are missing and the build fails with *"The system cannot find the path
-specified."*
+launchers are missing and the build fails — with *"The system cannot find the
+path specified"* on Windows or *"webpack: not found"* on Linux/macOS. This
+affects all platforms, not just Windows.
 
-[`scripts/prepare-windows-build.js`](../scripts/prepare-windows-build.js)
-(run via `yarn prepare:win`) creates the missing `.cmd` shims pointing at the
-hoisted binaries. It is idempotent and a no-op on non-Windows.
+[`scripts/prepare-build-shims.js`](../scripts/prepare-build-shims.js)
+(run via `yarn prepare:shims`) creates the missing launcher shims pointing at
+the hoisted binaries — `.cmd` files on Windows, executable shell shims on
+Linux/macOS. It is idempotent.
 
 ### 3. `@vscode/windows-ca-certs` optional module (applied automatically)
 
