@@ -160,12 +160,18 @@ export class MCPFrontendContribution
   onFileChanged(event: MCPFileChangeEvent): void {
     console.log(`[arduino-mcp] File changed via MCP: ${event.type} ${event.uri}`);
 
-    // Debounce notifications for the same file
+    // Always reflect the change in the editor. We deliberately do NOT gate this
+    // on the notification debounce: when a sketch is created and written in quick
+    // succession, the content write must still reload. And we must not rely on the
+    // filesystem watcher - sketchbooks often live under OneDrive/synced folders
+    // where native watchers miss events - so we force a reload from disk here.
+    this.focusAndReloadEditor(event.uri);
+
+    // Debounce only the toast notification to avoid spam on rapid writes.
     const now = Date.now();
     const lastChange = this.recentFileChanges.get(event.uri);
-    if (lastChange && (now - lastChange) < this.NOTIFICATION_DEBOUNCE_MS) {
-      return;
-    }
+    const recentlyNotified =
+      lastChange !== undefined && now - lastChange < this.NOTIFICATION_DEBOUNCE_MS;
     this.recentFileChanges.set(event.uri, now);
 
     // Clean up old entries
@@ -175,10 +181,10 @@ export class MCPFrontendContribution
       }
     }
 
-    // Focus the changed file in the editor
-    this.focusFileInEditor(event.uri);
+    if (recentlyNotified) {
+      return;
+    }
 
-    // Show notification
     const fileName = event.uri.split('/').pop() || event.uri;
     const action = event.type === 'created' ? 'Created' : 'Updated';
     this.messageService.info(
@@ -199,27 +205,24 @@ export class MCPFrontendContribution
   // ============================================================
 
   /**
-   * Focus a file in the editor (open if not already open)
+   * Open (or focus) the changed file and force its editor model to reload from
+   * disk. `editorManager.open` with `activate` opens the file if it is closed and
+   * focuses it if it is already open; the subsequent `revert({ soft: false })`
+   * discards the in-memory model and re-reads the file, so the editor reflects
+   * exactly what MCP wrote even when the filesystem watcher never fires.
    */
-  private async focusFileInEditor(uriString: string): Promise<void> {
+  private async focusAndReloadEditor(uriString: string): Promise<void> {
     try {
       const uri = new URI(uriString);
-
-      // Check if the file is already open in an editor
-      const existingEditor = this.editorManager.all.find(
-        editor => editor.editor.uri.toString() === uri.toString()
-      );
-
-      if (existingEditor) {
-        // File is already open - just reveal it
-        // The file system watcher should auto-reload the content
-        await this.editorManager.open(uri, { mode: 'reveal' });
-      } else {
-        // Open the file
-        await this.editorManager.open(uri, { mode: 'activate' });
+      const widget = await this.editorManager.open(uri, { mode: 'activate' });
+      const document = widget?.editor?.document as
+        | { revert?: (options?: { soft?: boolean }) => Promise<void> }
+        | undefined;
+      if (document && typeof document.revert === 'function') {
+        await document.revert({ soft: false });
       }
     } catch (error) {
-      console.error('[arduino-mcp] Error focusing file in editor:', error);
+      console.error('[arduino-mcp] Error reloading file in editor:', error);
     }
   }
 
