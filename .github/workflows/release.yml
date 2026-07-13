@@ -1,0 +1,134 @@
+name: Release
+
+# Fork-specific release workflow.
+#
+# Builds the Arduino IDE + MCP extension on Windows, Linux, and macOS and
+# attaches the (unsigned) apps to a GitHub Release as a DRAFT, so you can test
+# the artifacts before publishing. This intentionally does NOT sign, notarize,
+# or publish to Arduino's S3 - that machinery lived in the upstream build.yml,
+# which needs Arduino-org secrets a fork does not have.
+#
+# Trigger by pushing a tag (e.g. `git tag v0.5.0 && git push origin v0.5.0`)
+# or manually via the Actions tab (workflow_dispatch) with a version input.
+#
+# NOTE: the underlying build was verified end-to-end on Windows. The Linux and
+# macOS jobs run the same commands (which upstream also builds on those OSes);
+# treat the first run as a shake-out and expect to iterate on runner specifics.
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release tag/version (e.g. v0.5.0)'
+        required: true
+
+permissions:
+  contents: write # required to create/update the GitHub Release
+
+jobs:
+  build:
+    name: Build (${{ matrix.platform }})
+    strategy:
+      fail-fast: false # one platform failing should not block the others
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows
+          - os: ubuntu-latest
+            platform: linux
+          - os: macos-latest
+            platform: macos
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 90
+    env:
+      # Produce unsigned artifacts: never auto-discover signing identities.
+      CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '18.x'
+          # Corepack-managed Yarn 4 is enabled below; skip the cache probe that
+          # would otherwise run global Yarn 1 against the packageManager field.
+          package-manager-cache: false
+
+      - name: Setup Python
+        # 3.11 still ships distutils, which node-gyp needs (3.12 removed it).
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Enable Corepack (Yarn 4)
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Prepare Windows launcher shims
+        if: runner.os == 'Windows'
+        run: yarn prepare:win
+
+      - name: Download Arduino resources (CLI, LS, firmware uploader, examples)
+        run: yarn --cwd arduino-ide-extension prepare
+
+      - name: Download bundled VS Code plugins
+        run: yarn --cwd electron-app prepare
+
+      - name: Production build
+        working-directory: electron-app
+        run: node ../node_modules/@theia/cli/bin/theia build --config webpack.config.js --mode production
+
+      - name: Rebuild native modules for Electron
+        working-directory: electron-app
+        run: node ../node_modules/@theia/cli/bin/theia rebuild:electron
+
+      - name: Package (unpacked)
+        working-directory: electron-app
+        run: >
+          node ../node_modules/electron-builder/cli.js --dir --publish never
+          -c.electronVersion=30.1.2
+          -c.extraMetadata.name=arduino-ide
+          -c.extraMetadata.main=./arduino-ide-electron-main.js
+
+      - name: Zip artifact (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $src = Get-ChildItem -Directory electron-app/dist |
+            Where-Object { $_.Name -like '*-unpacked' } | Select-Object -First 1
+          Compress-Archive -Path "$($src.FullName)/*" -DestinationPath "arduino-ide-mcp-${{ matrix.platform }}.zip"
+
+      - name: Zip artifact (Linux/macOS)
+        if: runner.os != 'Windows'
+        run: |
+          set -e
+          # macOS produces dist/mac* (the .app), Linux produces dist/*-unpacked
+          src=$(ls -d electron-app/dist/*-unpacked 2>/dev/null | head -1 || true)
+          if [ -z "$src" ]; then src=$(ls -d electron-app/dist/mac* 2>/dev/null | head -1); fi
+          if [ -z "$src" ]; then echo "No build output found under electron-app/dist"; ls -la electron-app/dist; exit 1; fi
+          ( cd "$src" && zip -ry "$GITHUB_WORKSPACE/arduino-ide-mcp-${{ matrix.platform }}.zip" . )
+
+      - name: Upload to draft release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.version || github.ref_name }}
+          name: ${{ github.event.inputs.version || github.ref_name }}
+          draft: true # publish manually after verifying the artifacts
+          fail_on_unmatched_files: true
+          body: |
+            Unsigned development build of the Arduino IDE with the embedded MCP server.
+
+            Each archive contains the unpacked application for its platform - unzip and run
+            `Arduino IDE` (`Arduino IDE.exe` on Windows). The MCP server starts on
+            `http://127.0.0.1:3847`; the connection config (with the auth token) is printed
+            to the IDE console on launch.
+
+            Artifacts are unsigned; on macOS you may need to allow the app in
+            System Settings > Privacy & Security.
+          files: arduino-ide-mcp-${{ matrix.platform }}.zip
