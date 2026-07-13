@@ -11,7 +11,7 @@ import { BackendApplicationContribution } from '@theia/core/lib/node/backend-app
 import { ConnectionHandler, JsonRpcConnectionHandler } from '@theia/core/lib/common/messaging';
 import { ArduinoMCPServer } from './mcp-server';
 import { MCPContribution } from './mcp-contribution';
-import { MCPService, MCPServicePath } from '../common/mcp-service';
+import { MCPService, MCPServiceClient, MCPServicePath } from '../common/mcp-service';
 import { MCPServiceImpl } from './mcp-service-impl';
 import {
   MCPArduinoServices,
@@ -40,11 +40,18 @@ export default new ContainerModule((bind) => {
   bind(MCPServiceImpl).toSelf().inSingletonScope();
   bind(MCPService).toService(MCPServiceImpl);
 
-  // Expose MCP Service via JSON-RPC for frontend access
-  bind(ConnectionHandler).toDynamicValue(ctx => {
-    const service = ctx.container.get<MCPService>(MCPService);
-    return new JsonRpcConnectionHandler(MCPServicePath, () => service);
-  }).inSingletonScope();
+  // Expose MCP Service via JSON-RPC for frontend access. The factory MUST capture
+  // the per-connection `client` proxy and register it on the service - otherwise
+  // server->client callbacks (onFileChanged / onStatusChanged) have no channel back
+  // to the frontend and the real-time editor sync silently does nothing. This
+  // mirrors the NotificationService wiring in arduino-ide-extension.
+  bind(ConnectionHandler).toDynamicValue(ctx =>
+    new JsonRpcConnectionHandler<MCPServiceClient>(MCPServicePath, client => {
+      const service = ctx.container.get<MCPServiceImpl>(MCPServiceImpl);
+      service.setClient(client);
+      return service;
+    })
+  ).inSingletonScope();
 
   // Bind the MCP contribution that manages startup
   bind(MCPContribution).toSelf().inSingletonScope();
