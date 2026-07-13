@@ -46,6 +46,9 @@ jobs:
     env:
       # Produce unsigned artifacts: never auto-discover signing identities.
       CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      # Authenticate GitHub downloads (e.g. @vscode/ripgrep) to avoid the
+      # unauthenticated rate-limit 403s that flake the install on CI.
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
       - name: Checkout
         uses: actions/checkout@v5
@@ -81,16 +84,38 @@ jobs:
         run: corepack enable
 
       - name: Install dependencies
-        run: yarn install
+        shell: bash
+        run: |
+          for attempt in 1 2 3; do
+            yarn install && exit 0
+            echo "yarn install attempt $attempt failed; retrying in 20s..."
+            sleep 20
+          done
+          echo "yarn install failed after 3 attempts"; exit 1
 
       - name: Prepare build launcher shims
         run: yarn prepare:shims
 
       - name: Download Arduino resources (CLI, LS, firmware uploader, examples)
-        run: yarn --cwd arduino-ide-extension prepare
+        # downloads.arduino.cc occasionally returns transient 503s; retry.
+        shell: bash
+        run: |
+          for attempt in 1 2 3 4; do
+            yarn --cwd arduino-ide-extension prepare && exit 0
+            echo "Resource download attempt $attempt failed; retrying in 20s..."
+            sleep 20
+          done
+          echo "Resource download failed after 4 attempts"; exit 1
 
       - name: Download bundled VS Code plugins
-        run: yarn --cwd electron-app prepare
+        shell: bash
+        run: |
+          for attempt in 1 2 3 4; do
+            yarn --cwd electron-app prepare && exit 0
+            echo "Plugin download attempt $attempt failed; retrying in 20s..."
+            sleep 20
+          done
+          echo "Plugin download failed after 4 attempts"; exit 1
 
       - name: Production build
         working-directory: electron-app
