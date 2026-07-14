@@ -1,5 +1,5 @@
 diff --git a/binding.gyp b/binding.gyp
-index 66411ec3f7caa6880ad0f6284682fce5b0067416..1a51b64f58e5b9364f95aeb25143e212a61c7ae1 100644
+index 66411ec3f7caa6880ad0f6284682fce5b0067416..bba36bf3be2a5d947a205e42658b50a18d368115 100644
 --- a/binding.gyp
 +++ b/binding.gyp
 @@ -6,7 +6,8 @@
@@ -8,7 +8,7 @@ index 66411ec3f7caa6880ad0f6284682fce5b0067416..1a51b64f58e5b9364f95aeb25143e212
                  '/Qspectre',
 -                '/guard:cf'
 +                '/guard:cf',
-+                '/permissive'
++                '-permissive'
                ]
              },
              'VCLinkerTool': {
