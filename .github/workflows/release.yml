@@ -155,6 +155,11 @@ jobs:
 
       - name: Package (unpacked)
         working-directory: electron-app
+        # Force bash on all platforms: under PowerShell (the Windows default)
+        # the `-c.extraMetadata.main=./...` argument is mis-tokenized and
+        # electron-builder treats it as a config-file path (ENOENT). bash parses
+        # it correctly - which is why the Linux/macOS jobs already pass.
+        shell: bash
         run: >
           node ../node_modules/electron-builder/cli.js --dir --publish never
           -c.electronVersion=30.1.2
