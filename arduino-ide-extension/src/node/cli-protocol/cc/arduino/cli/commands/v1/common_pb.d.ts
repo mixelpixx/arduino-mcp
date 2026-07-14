@@ -564,6 +564,14 @@ export class SketchProfile extends jspb.Message {
     setPortConfig(value?: MonitorPortConfiguration): SketchProfile;
     getProtocol(): string;
     setProtocol(value: string): SketchProfile;
+    clearPlatformsList(): void;
+    getPlatformsList(): Array<ProfilePlatformReference>;
+    setPlatformsList(value: Array<ProfilePlatformReference>): SketchProfile;
+    addPlatforms(value?: ProfilePlatformReference, index?: number): ProfilePlatformReference;
+    clearLibrariesList(): void;
+    getLibrariesList(): Array<ProfileLibraryReference>;
+    setLibrariesList(value: Array<ProfileLibraryReference>): SketchProfile;
+    addLibraries(value?: ProfileLibraryReference, index?: number): ProfileLibraryReference;
 
     serializeBinary(): Uint8Array;
     toObject(includeInstance?: boolean): SketchProfile.AsObject;
@@ -583,5 +591,125 @@ export namespace SketchProfile {
         port: string,
         portConfig?: MonitorPortConfiguration.AsObject,
         protocol: string,
+        platformsList: Array<ProfilePlatformReference.AsObject>,
+        librariesList: Array<ProfileLibraryReference.AsObject>,
     }
+}
+
+export class ProfilePlatformReference extends jspb.Message { 
+    getId(): string;
+    setId(value: string): ProfilePlatformReference;
+
+    hasVersion(): boolean;
+    clearVersion(): void;
+    getVersion(): string | undefined;
+    setVersion(value: string): ProfilePlatformReference;
+
+    hasIndexUrl(): boolean;
+    clearIndexUrl(): void;
+    getIndexUrl(): string | undefined;
+    setIndexUrl(value: string): ProfilePlatformReference;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): ProfilePlatformReference.AsObject;
+    static toObject(includeInstance: boolean, msg: ProfilePlatformReference): ProfilePlatformReference.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: ProfilePlatformReference, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): ProfilePlatformReference;
+    static deserializeBinaryFromReader(message: ProfilePlatformReference, reader: jspb.BinaryReader): ProfilePlatformReference;
+}
+
+export namespace ProfilePlatformReference {
+    export type AsObject = {
+        id: string,
+        version?: string,
+        indexUrl?: string,
+    }
+}
+
+export class ProfileLibraryReference extends jspb.Message { 
+
+    hasIndexLibrary(): boolean;
+    clearIndexLibrary(): void;
+    getIndexLibrary(): ProfileLibraryReference.IndexLibrary | undefined;
+    setIndexLibrary(value?: ProfileLibraryReference.IndexLibrary): ProfileLibraryReference;
+
+    hasLocalLibrary(): boolean;
+    clearLocalLibrary(): void;
+    getLocalLibrary(): ProfileLibraryReference.LocalLibrary | undefined;
+    setLocalLibrary(value?: ProfileLibraryReference.LocalLibrary): ProfileLibraryReference;
+
+    getLibraryCase(): ProfileLibraryReference.LibraryCase;
+
+    serializeBinary(): Uint8Array;
+    toObject(includeInstance?: boolean): ProfileLibraryReference.AsObject;
+    static toObject(includeInstance: boolean, msg: ProfileLibraryReference): ProfileLibraryReference.AsObject;
+    static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+    static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+    static serializeBinaryToWriter(message: ProfileLibraryReference, writer: jspb.BinaryWriter): void;
+    static deserializeBinary(bytes: Uint8Array): ProfileLibraryReference;
+    static deserializeBinaryFromReader(message: ProfileLibraryReference, reader: jspb.BinaryReader): ProfileLibraryReference;
+}
+
+export namespace ProfileLibraryReference {
+    export type AsObject = {
+        indexLibrary?: ProfileLibraryReference.IndexLibrary.AsObject,
+        localLibrary?: ProfileLibraryReference.LocalLibrary.AsObject,
+    }
+
+
+    export class IndexLibrary extends jspb.Message { 
+        getName(): string;
+        setName(value: string): IndexLibrary;
+        getVersion(): string;
+        setVersion(value: string): IndexLibrary;
+        getIsDependency(): boolean;
+        setIsDependency(value: boolean): IndexLibrary;
+
+        serializeBinary(): Uint8Array;
+        toObject(includeInstance?: boolean): IndexLibrary.AsObject;
+        static toObject(includeInstance: boolean, msg: IndexLibrary): IndexLibrary.AsObject;
+        static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+        static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+        static serializeBinaryToWriter(message: IndexLibrary, writer: jspb.BinaryWriter): void;
+        static deserializeBinary(bytes: Uint8Array): IndexLibrary;
+        static deserializeBinaryFromReader(message: IndexLibrary, reader: jspb.BinaryReader): IndexLibrary;
+    }
+
+    export namespace IndexLibrary {
+        export type AsObject = {
+            name: string,
+            version: string,
+            isDependency: boolean,
+        }
+    }
+
+    export class LocalLibrary extends jspb.Message { 
+        getPath(): string;
+        setPath(value: string): LocalLibrary;
+
+        serializeBinary(): Uint8Array;
+        toObject(includeInstance?: boolean): LocalLibrary.AsObject;
+        static toObject(includeInstance: boolean, msg: LocalLibrary): LocalLibrary.AsObject;
+        static extensions: {[key: number]: jspb.ExtensionFieldInfo<jspb.Message>};
+        static extensionsBinary: {[key: number]: jspb.ExtensionFieldBinaryInfo<jspb.Message>};
+        static serializeBinaryToWriter(message: LocalLibrary, writer: jspb.BinaryWriter): void;
+        static deserializeBinary(bytes: Uint8Array): LocalLibrary;
+        static deserializeBinaryFromReader(message: LocalLibrary, reader: jspb.BinaryReader): LocalLibrary;
+    }
+
+    export namespace LocalLibrary {
+        export type AsObject = {
+            path: string,
+        }
+    }
+
+
+    export enum LibraryCase {
+        LIBRARY_NOT_SET = 0,
+        INDEX_LIBRARY = 1,
+        LOCAL_LIBRARY = 2,
+    }
+
 }
