@@ -35,7 +35,13 @@ jobs:
       fail-fast: false # one platform failing should not block the others
       matrix:
         include:
-          - os: windows-latest
+          # Pinned to windows-2022, NOT windows-latest: the latest image ships
+          # Visual Studio 18 (2026), which no released node-gyp can detect - it
+          # reports `unknown version "undefined"` and ERR_CHILD_PROCESS_STDIO_
+          # MAXBUFFER from its PowerShell VS probe, breaking every native-module
+          # build. windows-2022 has VS 2022 17.x (what node-gyp expects, and
+          # what local builds use). Revisit when node-gyp gains VS 18 support.
+          - os: windows-2022
             platform: windows
           - os: ubuntu-latest
             platform: linux
