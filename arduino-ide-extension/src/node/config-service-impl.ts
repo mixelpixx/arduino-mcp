@@ -16,7 +16,12 @@ import {
 } from '../common/protocol';
 import { spawnCommand } from './exec-util';
 import { ArduinoDaemonImpl } from './arduino-daemon-impl';
-import { DefaultCliConfig, CLI_CONFIG, CliConfig } from './cli-config';
+import {
+  DefaultCliConfig,
+  CLI_CONFIG,
+  CliConfig,
+  Directories,
+} from './cli-config';
 import { Deferred } from '@theia/core/lib/common/promise-util';
 import { EnvVariablesServer } from '@theia/core/lib/common/env-variables';
 import { deepClone, nls } from '@theia/core';
@@ -203,6 +208,7 @@ export class ConfigServiceImpl
           mergedModel
         )}`
       );
+
       return mergedModel;
     } catch (error) {
       if (ErrnoException.isENOENT(error)) {
@@ -217,17 +223,38 @@ export class ConfigServiceImpl
 
   private async getFallbackCliConfig(): Promise<DefaultCliConfig> {
     const cliPath = this.daemon.getExecPath();
-    const [configRaw, directoriesRaw] = await Promise.all([
-      spawnCommand(cliPath, ['config', 'dump', '--json']),
-      // Since CLI 1.0, the command `config dump` only returns user-modified values and not default ones.
-      // directories.user and directories.data are required by IDE2 so we get the default value explicitly.
-      spawnCommand(cliPath, ['config', 'get', 'directories', '--json']),
+    const configRaw = await spawnCommand(cliPath, ['config', 'dump', '--json']);
+
+    const config = JSON.parse(configRaw) as { config?: CliConfig };
+
+    // Since CLI 1.0, the command `config dump` only returns user-modified values and not default ones.
+    // directories.user and directories.data are required by IDE2 so we get the default value for each explicitly.
+    const user = await this.getDirectoryValue(cliPath, 'user');
+    const data = await this.getDirectoryValue(cliPath, 'data');
+
+    return {
+      ...config.config,
+      directories: { user, data },
+    };
+  }
+
+  private async getDirectoryValue(
+    cliPath: string,
+    key: keyof Directories
+  ): Promise<string> {
+    const raw = await spawnCommand(cliPath, [
+      'config',
+      'get',
+      `directories.${key}`,
+      '--json',
     ]);
-
-    const config = JSON.parse(configRaw);
-    const { user, data } = JSON.parse(directoriesRaw);
-
-    return { ...config.config, directories: { user, data } };
+    const value = JSON.parse(raw) as string;
+    if (!value) {
+      throw new InvalidConfigError([
+        `Could not resolve required CLI configuration value: directories.${key}`,
+      ]);
+    }
+    return value;
   }
 
   private async initCliConfigTo(fsPathToDir: string): Promise<void> {

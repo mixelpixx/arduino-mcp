@@ -346,10 +346,13 @@ export class SettingsService {
       );
     }
 
-    (config as any).additionalUrls = additionalUrls;
-    (config as any).sketchDirUri = sketchDirUri;
-    (config as any).network = network;
-    (config as any).locale = currentLanguage;
+    const updatedConfig: typeof config = {
+      ...config,
+      additionalUrls,
+      sketchDirUri,
+      network,
+      locale: currentLanguage,
+    };
 
     await Promise.all([
       this.savePreference('editor.fontSize', editorFontSize),
@@ -368,7 +371,7 @@ export class SettingsService {
       this.savePreference(MCP_PORT_SETTING, mcpPort),
       this.savePreference(MCP_LOG_LEVEL_SETTING, mcpLogLevel),
       this.savePreference(MCP_TOOL_MODE_SETTING, mcpToolMode),
-      this.configService.setConfiguration(config),
+      this.configService.setConfiguration(updatedConfig),
     ]);
     this.onDidChangeEmitter.fire(this._settings);
 
