@@ -35,7 +35,13 @@ jobs:
       fail-fast: false # one platform failing should not block the others
       matrix:
         include:
-          - os: windows-latest
+          # Pinned to windows-2022, NOT windows-latest: the latest image ships
+          # Visual Studio 18 (2026), which no released node-gyp can detect - it
+          # reports `unknown version "undefined"` and ERR_CHILD_PROCESS_STDIO_
+          # MAXBUFFER from its PowerShell VS probe, breaking every native-module
+          # build. windows-2022 has VS 2022 17.x (what node-gyp expects, and
+          # what local builds use). Revisit when node-gyp gains VS 18 support.
+          - os: windows-2022
             platform: windows
           - os: ubuntu-latest
             platform: linux
@@ -117,16 +123,43 @@ jobs:
           done
           echo "Plugin download failed after 4 attempts"; exit 1
 
+      - name: Compile extension workspaces (TypeScript)
+        # electron-app's production webpack imports the COMPILED lib/ of both
+        # extensions (e.g. arduino-ide-extension/lib/node/theia/filesystem/
+        # parcel-watcher). The per-workspace `prepare` only downloads CLI/LS/
+        # examples - it does not run tsc - so lib/ must be built explicitly here,
+        # or the webpack config fails to load ("Cannot find module ...lib/...").
+        # Use `npm run --prefix` (not `yarn --cwd`): arduino-ide-extension does
+        # not declare a local typescript, and Yarn 4 bin-scoping would fall back
+        # to a stale global tsc; npm adds the hoisted node_modules/.bin (tsc
+        # 5.8.2) to PATH.
+        shell: bash
+        run: |
+          mkdir -p arduino-ide-extension/src/node/resources
+          npm run --prefix arduino-ide-extension build
+          npm run --prefix arduino-mcp-extension build
+
+      - name: Rebuild native modules for Electron
+        # Must run BEFORE the production webpack build: the NativeWebpackPlugin
+        # bundles whatever pty.node (and other .node) is present in node_modules
+        # into the backend output. yarn install builds a Node-ABI pty.node;
+        # rebuild:electron recompiles it against Electron's ABI. If this ran
+        # after the webpack build, the packaged app would ship a Node-ABI native
+        # module and crash on launch under Electron.
+        working-directory: electron-app
+        run: node ../node_modules/@theia/cli/bin/theia rebuild:electron
+
       - name: Production build
         working-directory: electron-app
         run: node ../node_modules/@theia/cli/bin/theia build --config webpack.config.js --mode production
 
-      - name: Rebuild native modules for Electron
-        working-directory: electron-app
-        run: node ../node_modules/@theia/cli/bin/theia rebuild:electron
-
       - name: Package (unpacked)
         working-directory: electron-app
+        # Force bash on all platforms: under PowerShell (the Windows default)
+        # the `-c.extraMetadata.main=./...` argument is mis-tokenized and
+        # electron-builder treats it as a config-file path (ENOENT). bash parses
+        # it correctly - which is why the Linux/macOS jobs already pass.
+        shell: bash
         run: >
           node ../node_modules/electron-builder/cli.js --dir --publish never
           -c.electronVersion=30.1.2
