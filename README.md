@@ -37,10 +37,14 @@ making the IDE a first-class participant in the conversation:
 
 ## Download
 
-Grab an unsigned development build from the
-[**Releases**](https://github.com/mixelpixx/arduino-mcp/releases) page — Windows,
-macOS, and Linux archives are attached to each release. Unzip and run
-`Arduino IDE` (`Arduino IDE.exe` on Windows).
+**Latest release: [v0.5.2](https://github.com/mixelpixx/Arduino-Agent/releases/tag/v0.5.2)** — unsigned development builds:
+
+- [**Windows x64**](https://github.com/mixelpixx/Arduino-Agent/releases/download/v0.5.2/arduino-ide-mcp-windows.zip)
+- [**macOS**](https://github.com/mixelpixx/Arduino-Agent/releases/download/v0.5.2/arduino-ide-mcp-macos.zip)
+- [**Linux x64**](https://github.com/mixelpixx/Arduino-Agent/releases/download/v0.5.2/arduino-ide-mcp-linux.zip)
+
+Unzip and run `Arduino IDE` (`Arduino IDE.exe` on Windows). Older builds are on the
+[Releases](https://github.com/mixelpixx/Arduino-Agent/releases) page.
 
 > These are unsigned dev builds. On macOS you may need to allow the app under
 > **System Settings → Privacy & Security**; on Windows, dismiss SmartScreen with
